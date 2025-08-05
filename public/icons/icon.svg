@@ -1,0 +1,27 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="#0f766e"/>
+  
+  <!-- Fishing Hook -->
+  <g transform="translate(96, 96)">
+    <!-- Hook line -->
+    <line x1="0" y1="-64" x2="0" y2="32" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Hook curve -->
+    <path d="M0 32 Q24 32 24 56 Q24 80 0 80 Q-24 80 -24 56 Q-24 40 -8 40" 
+          stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round"/>
+    
+    <!-- Hook point -->
+    <path d="M-8 40 L-16 32" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Fishing line -->
+    <line x1="0" y1="-64" x2="0" y2="-80" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Bait/lure -->
+    <circle cx="0" cy="20" r="8" fill="#ff6b6b"/>
+    <circle cx="0" cy="20" r="4" fill="#ffffff"/>
+  </g>
+  
+  <!-- App name -->
+  <text x="96" y="170" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="16" font-weight="bold">HOOKR</text>
+</svg>
