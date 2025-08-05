@@ -51,12 +51,12 @@ const generateScreenName = () => {
 };
 
 // Get or create user identity
-const getUserIdentity = () => {
+const getUserIdentity = (customUsername = null) => {
     let user = localStorage.getItem('hookr_user');
-    if (!user) {
+    if (!user || customUsername) {
         user = {
             id: crypto.randomUUID(),
-            screenName: generateScreenName(),
+            screenName: customUsername || generateScreenName(),
             createdAt: new Date().toISOString()
         };
         localStorage.setItem('hookr_user', JSON.stringify(user));
@@ -81,21 +81,98 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // Mock locations for testing
 const mockLocations = {
-    'seattle': { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
-    'miami': { lat: 25.7617, lng: -80.1918, name: 'Miami, FL' },
-    'boston': { lat: 42.3601, lng: -71.0589, name: 'Boston, MA' },
-    'sandiego': { lat: 32.7157, lng: -117.1611, name: 'San Diego, CA' },
-    'portland': { lat: 45.5152, lng: -122.6784, name: 'Portland, OR' }
+    seattle: { lat: 47.6062, lng: -122.3321 },
+    miami: { lat: 25.7617, lng: -80.1918 },
+    chicago: { lat: 41.8781, lng: -87.6298 },
+    denver: { lat: 39.7392, lng: -104.9903 }
 };
 
-// Post Component
+// Username Setup Component
+const UsernameSetup = ({ onUsernameSet }) => {
+    const [username, setUsername] = useState(generateScreenName());
+
+    const handleContinue = () => {
+        if (username.trim().length < 3) {
+            alert('Username must be at least 3 characters long');
+            return;
+        }
+        if (username.trim().length > 20) {
+            alert('Username must be 20 characters or less');
+            return;
+        }
+        onUsernameSet(username.trim());
+    };
+
+    const generateNew = () => {
+        setUsername(generateScreenName());
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center p-4">
+            <div className="w-full max-w-md mx-auto border border-slate-200 bg-white/95 backdrop-blur-sm shadow-xl rounded-lg">
+                <div className="text-center space-y-4 p-6">
+                    <div className="text-6xl mb-4">🎣</div>
+                    <h3 className="text-3xl font-bold text-slate-900">
+                        Welcome to Hookr
+                    </h3>
+                    <p className="text-slate-600 text-base">
+                        Join the anonymous fishing community. Choose your angler name to get started.
+                    </p>
+                </div>
+                
+                <div className="space-y-6 p-6 pt-0">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">
+                            Your Angler Name
+                        </label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Enter your fishing name"
+                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                            maxLength={20}
+                        />
+                        <div className="text-xs text-slate-500">
+                            {username.length}/20 characters
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={generateNew}
+                            className="flex-1 h-10 px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-900"
+                        >
+                            🎲 Generate New
+                        </button>
+                        <button 
+                            onClick={handleContinue}
+                            disabled={!username.trim() || username.trim().length < 3}
+                            className="flex-1 h-10 px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            🚀 Start Fishing
+                        </button>
+                    </div>
+
+                    <div className="text-center text-xs text-slate-500 space-y-1">
+                        <p>• Your identity stays anonymous</p>
+                        <p>• Share catches, spots, and tips locally</p>
+                        <p>• Connect with anglers in your area</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Post Component with improved accessibility
 const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [isReported, setIsReported] = useState(false);
     
-    const userVote = userVotes.find(v => v.postId === post.id);
-    const postComments = comments.filter(c => c.postId === post.id);
+    const userVote = userVotes.find(vote => vote.postId === post.id);
+    const postComments = comments.filter(comment => comment.postId === post.id);
     
     const handleVote = (voteType) => {
         onVote(post.id, voteType);
@@ -125,119 +202,129 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
         return `${Math.floor(diff / 86400)}d`;
     };
     
-    const getRandomEmoji = () => {
-        const emojis = ['🐟', '🎣', '🐠', '🦈', '🐙', '🦀', '🐚', '⚓', '🚤', '🏝️'];
-        return emojis[Math.floor(Math.random() * emojis.length)];
-    };
-    
     // Hide posts with score <= -5
     if (post.score <= -5) {
         return null;
     }
     
     return (
-        <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4 mb-4 shadow-lg border border-ocean-200">
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center space-x-2">
-                    <span className="text-ocean-700 font-semibold">{post.author}</span>
-                    <span className="text-gray-500 text-sm">{getTimeAgo(post.timestamp)}</span>
-                    <span className="text-gray-400 text-xs">📍 {post.location.distance}mi</span>
+        <div className="mb-4 border border-slate-200 bg-white/95 backdrop-blur-sm shadow-sm rounded-lg">
+            <div className="p-6 pb-3">
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-900 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                            {post.author.charAt(0)}
+                        </div>
+                        <div>
+                            <div className="font-semibold text-slate-900">{post.author}</div>
+                            <div className="text-sm text-slate-500 flex items-center space-x-2">
+                                <span>{getTimeAgo(post.timestamp)}</span>
+                                <span>•</span>
+                                <span className="flex items-center">
+                                    📍 {post.location.distance}mi
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleReport}
+                        className={`text-xs px-2 py-1 rounded-md ${
+                            isReported 
+                                ? 'bg-red-50 text-red-700 hover:bg-red-100' 
+                                : 'text-slate-500 hover:bg-slate-100'
+                        } focus:outline-none focus:ring-2 focus:ring-blue-900`}
+                        disabled={isReported}
+                    >
+                        {isReported ? '✓ Reported' : '🚩'}
+                    </button>
                 </div>
-                <button
-                    onClick={handleReport}
-                    className={`text-xs px-2 py-1 rounded ${
-                        isReported 
-                            ? 'bg-red-200 text-red-800' 
-                            : 'text-gray-500 hover:bg-gray-100'
-                    }`}
-                    disabled={isReported}
-                >
-                    {isReported ? '✓ Reported' : '🚩 Report'}
-                </button>
             </div>
             
-            <p className="text-gray-800 mb-3">{post.content}</p>
+            <div className="px-6 py-0">
+                <p className="text-slate-800 leading-relaxed">{post.content}</p>
+            </div>
             
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={() => handleVote('up')}
-                        className={`flex items-center space-x-1 px-2 py-1 rounded ${
-                            userVote?.type === 'up' 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                    >
-                        <span>⬆️</span>
-                        <span className="text-sm">{post.upvotes}</span>
-                    </button>
+            <div className="p-6 pt-4">
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-1">
+                        <button
+                            onClick={() => handleVote('up')}
+                            className={`h-8 px-3 rounded-md ${
+                                userVote?.type === 'up' 
+                                    ? 'bg-green-50 text-green-700 hover:bg-green-100' 
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-900`}
+                        >
+                            <span className="mr-1">⬆️</span>
+                            <span className="text-sm font-medium">{post.upvotes}</span>
+                        </button>
+                        
+                        <button
+                            onClick={() => handleVote('down')}
+                            className={`h-8 px-3 rounded-md ${
+                                userVote?.type === 'down' 
+                                    ? 'bg-red-50 text-red-700 hover:bg-red-100' 
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            } focus:outline-none focus:ring-2 focus:ring-blue-900`}
+                        >
+                            <span className="mr-1">⬇️</span>
+                            <span className="text-sm font-medium">{post.downvotes}</span>
+                        </button>
+                        
+                        <div className={`px-3 py-1 text-sm font-semibold ${
+                            post.score > 0 ? 'text-green-700' : 
+                            post.score < 0 ? 'text-red-700' : 'text-slate-600'
+                        }`}>
+                            {post.score > 0 ? '+' : ''}{post.score}
+                        </div>
+                    </div>
                     
                     <button
-                        onClick={() => handleVote('down')}
-                        className={`flex items-center space-x-1 px-2 py-1 rounded ${
-                            userVote?.type === 'down' 
-                                ? 'bg-red-100 text-red-700' 
-                                : 'text-gray-600 hover:bg-gray-100'
-                        }`}
+                        onClick={() => setShowComments(!showComments)}
+                        className="text-blue-900 hover:bg-blue-50 h-8 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-900"
                     >
-                        <span>⬇️</span>
-                        <span className="text-sm">{post.downvotes}</span>
+                        <span className="mr-1">💬</span>
+                        <span className="text-sm font-medium">{postComments.length}</span>
                     </button>
-                    
-                    <span className={`font-semibold ${
-                        post.score > 0 ? 'text-green-600' : 
-                        post.score < 0 ? 'text-red-600' : 'text-gray-600'
-                    }`}>
-                        {post.score > 0 ? '+' : ''}{post.score}
-                    </span>
                 </div>
                 
-                <button
-                    onClick={() => setShowComments(!showComments)}
-                    className="flex items-center space-x-1 text-ocean-600 hover:text-ocean-800 text-sm"
-                >
-                    <span>💬</span>
-                    <span>{postComments.length}</span>
-                </button>
-            </div>
-            
-            {showComments && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="space-y-3 mb-4">
+                {showComments && (
+                    <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
                         {postComments.map(comment => (
-                            <div key={comment.id} className="bg-gray-50 rounded p-3">
-                                <div className="flex items-center space-x-2 mb-1">
-                                    <span className="text-sm">{getRandomEmoji()}</span>
-                                    <span className="text-ocean-600 font-medium text-sm">{comment.author}</span>
-                                    <span className="text-gray-400 text-xs">{getTimeAgo(comment.timestamp)}</span>
+                            <div key={comment.id} className="bg-slate-50 p-3 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <div className="w-6 h-6 bg-blue-900 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                                        {comment.author.charAt(0)}
+                                    </div>
+                                    <span className="font-medium text-slate-900 text-sm">{comment.author}</span>
+                                    <span className="text-xs text-slate-500">{getTimeAgo(comment.timestamp)}</span>
                                 </div>
-                                <p className="text-gray-700 text-sm">{comment.content}</p>
+                                <p className="text-slate-700 text-sm">{comment.content}</p>
                             </div>
                         ))}
+                        
+                        <div className="flex space-x-2">
+                            <textarea
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                placeholder="Add a comment..."
+                                className="flex-1 min-h-[60px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                                maxLength={200}
+                            />
+                            <button
+                                onClick={handleComment}
+                                disabled={!commentText.trim()}
+                                className="self-end px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Post
+                            </button>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            {commentText.length}/200 characters
+                        </div>
                     </div>
-                    
-                    <div className="flex space-x-2">
-                        <input
-                            type="text"
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="Add a comment..."
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ocean-500 text-sm"
-                            maxLength={200}
-                        />
-                        <button
-                            onClick={handleComment}
-                            disabled={!commentText.trim()}
-                            className="px-4 py-2 bg-ocean-600 text-white rounded-lg hover:bg-ocean-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
-                        >
-                            Comment
-                        </button>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                        {commentText.length}/200 characters
-                    </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
@@ -252,23 +339,31 @@ const App = () => {
     const [userLocation, setUserLocation] = useState(null);
     const [selectedLocation, setSelectedLocation] = useState('seattle');
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [darkMode, setDarkMode] = useState(false);
     const [db, setDb] = useState(null);
+    const [showUsernameSetup, setShowUsernameSetup] = useState(false);
     
     const textareaRef = useRef(null);
     
+    // Check if user needs to set up username
+    useEffect(() => {
+        const userData = localStorage.getItem('hookr_user');
+        if (!userData) {
+            setShowUsernameSetup(true);
+        } else {
+            setUser(JSON.parse(userData));
+        }
+    }, []);
+    
     // Initialize app
     useEffect(() => {
+        if (!user) return;
+        
         const initApp = async () => {
-            // Initialize user
-            const userData = getUserIdentity();
-            setUser(userData);
-            
             // Initialize database
             try {
                 const database = await initDB();
                 setDb(database);
-                await loadData(database, userData.id);
+                await loadData(database, user.id);
             } catch (error) {
                 console.error('Failed to initialize database:', error);
             }
@@ -305,7 +400,14 @@ const App = () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, []);
+    }, [user, selectedLocation]);
+    
+    // Handle username setup
+    const handleUsernameSet = (username) => {
+        const userData = getUserIdentity(username);
+        setUser(userData);
+        setShowUsernameSetup(false);
+    };
     
     // Load data from IndexedDB
     const loadData = async (database, userId) => {
@@ -408,51 +510,50 @@ const App = () => {
                 postRequest.onerror = () => reject(postRequest.error);
             });
             
-            // Check existing vote
-            const existingVoteRequest = votesStore.index('userId').getAll(user.id);
-            const userVotesResult = await new Promise((resolve, reject) => {
+            // Check for existing vote
+            const existingVoteRequest = votesStore.index('postId').getAll(postId);
+            const existingVotes = await new Promise((resolve, reject) => {
                 existingVoteRequest.onsuccess = () => resolve(existingVoteRequest.result);
                 existingVoteRequest.onerror = () => reject(existingVoteRequest.error);
             });
             
-            const existingVote = userVotesResult.find(v => v.postId === postId);
+            const userVote = existingVotes.find(vote => vote.userId === user.id);
             
-            // Update vote counts
-            if (existingVote) {
-                if (existingVote.type === voteType) {
-                    // Remove vote
+            if (userVote) {
+                if (userVote.type === voteType) {
+                    // Remove vote if same type
                     await new Promise((resolve, reject) => {
-                        const deleteRequest = votesStore.delete(existingVote.id);
+                        const deleteRequest = votesStore.delete(userVote.id);
                         deleteRequest.onsuccess = () => resolve();
                         deleteRequest.onerror = () => reject(deleteRequest.error);
                     });
                     
                     if (voteType === 'up') {
-                        post.upvotes--;
+                        post.upvotes = Math.max(0, post.upvotes - 1);
                     } else {
-                        post.downvotes--;
+                        post.downvotes = Math.max(0, post.downvotes - 1);
                     }
                 } else {
-                    // Change vote
-                    existingVote.type = voteType;
+                    // Change vote type
+                    userVote.type = voteType;
                     await new Promise((resolve, reject) => {
-                        const updateRequest = votesStore.put(existingVote);
+                        const updateRequest = votesStore.put(userVote);
                         updateRequest.onsuccess = () => resolve();
                         updateRequest.onerror = () => reject(updateRequest.error);
                     });
                     
                     if (voteType === 'up') {
-                        post.upvotes++;
-                        post.downvotes--;
+                        post.upvotes += 1;
+                        post.downvotes = Math.max(0, post.downvotes - 1);
                     } else {
-                        post.downvotes++;
-                        post.upvotes--;
+                        post.downvotes += 1;
+                        post.upvotes = Math.max(0, post.upvotes - 1);
                     }
                 }
             } else {
-                // New vote
+                // Add new vote
                 const newVote = {
-                    postId,
+                    postId: postId,
                     userId: user.id,
                     type: voteType,
                     timestamp: new Date().toISOString()
@@ -465,16 +566,16 @@ const App = () => {
                 });
                 
                 if (voteType === 'up') {
-                    post.upvotes++;
+                    post.upvotes += 1;
                 } else {
-                    post.downvotes++;
+                    post.downvotes += 1;
                 }
             }
             
             // Update score
             post.score = post.upvotes - post.downvotes;
             
-            // Save updated post
+            // Update post in database
             await new Promise((resolve, reject) => {
                 const updateRequest = postsStore.put(post);
                 updateRequest.onsuccess = () => resolve();
@@ -487,13 +588,13 @@ const App = () => {
         }
     };
     
-    // Handle comment
+    // Handle commenting
     const handleComment = async (postId, content) => {
         if (!db || !user) return;
         
         const newComment = {
-            postId,
-            content,
+            postId: postId,
+            content: content,
             author: user.screenName,
             authorId: user.id,
             timestamp: new Date().toISOString()
@@ -504,126 +605,94 @@ const App = () => {
             const store = transaction.objectStore('comments');
             await new Promise((resolve, reject) => {
                 const request = store.add(newComment);
-                request.onsuccess = () => resolve();
+                request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
             
             await loadData(db, user.id);
         } catch (error) {
-            console.error('Failed to add comment:', error);
+            console.error('Failed to comment:', error);
         }
     };
     
-    // Handle report
+    // Handle reporting
     const handleReport = (postId) => {
-        console.log(`Post ${postId} reported by user ${user?.id}`);
-        // In a real app, this would send to a moderation system
+        console.log('Post reported:', postId);
+        // In a real app, this would send to moderation
     };
-    
-    // Regenerate screen name
-    const regenerateScreenName = () => {
-        const newUser = {
-            ...user,
-            screenName: generateScreenName()
-        };
-        setUser(newUser);
-        localStorage.setItem('hookr_user', JSON.stringify(newUser));
-    };
-    
-    // Change mock location
-    const handleLocationChange = (locationKey) => {
-        setSelectedLocation(locationKey);
-        setUserLocation(mockLocations[locationKey]);
-    };
-    
-    // Auto-resize textarea
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    }, [newPostContent]);
     
     const filteredPosts = getFilteredPosts();
     
+    // Show username setup screen if needed
+    if (showUsernameSetup) {
+        return <UsernameSetup onUsernameSet={handleUsernameSet} />;
+    }
+    
     return (
-        <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-            <div className="max-w-lg mx-auto bg-white bg-opacity-10 backdrop-blur-sm min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
+            <div className="max-w-2xl mx-auto">
                 {/* Header */}
-                <div className="bg-ocean-700 text-white p-4 sticky top-0 z-10 backdrop-blur-sm bg-opacity-90">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <span className="text-2xl">🎣</span>
-                            <h1 className="text-xl font-bold">Hookr</h1>
+                <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+                    <div className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <span className="text-3xl">🎣</span>
+                                <div>
+                                    <h1 className="text-xl font-bold text-slate-900">Hookr</h1>
+                                    <p className="text-sm text-slate-600">Fishing Community</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <div className="text-right">
+                                    <div className="text-sm font-medium text-slate-900">{user?.screenName}</div>
+                                    <div className="text-xs text-slate-500">
+                                        {isOnline ? '🟢 Online' : '🔴 Offline'}
+                                    </div>
+                                </div>
+                                <div className="w-8 h-8 bg-blue-900 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                                    {user?.screenName?.charAt(0)}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            {!isOnline && (
-                                <span className="text-yellow-200 text-sm">📡 Offline</span>
-                            )}
-                            <button
-                                onClick={() => setDarkMode(!darkMode)}
-                                className="p-2 rounded-full hover:bg-ocean-600 transition-colors"
-                            >
-                                {darkMode ? '☀️' : '🌙'}
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-2 text-sm">
-                        <div className="flex items-center space-x-2">
-                            <span>👤 {user?.screenName}</span>
-                            <button
-                                onClick={regenerateScreenName}
-                                className="text-xs bg-ocean-600 px-2 py-1 rounded hover:bg-ocean-500"
-                            >
-                                🔄
-                            </button>
-                        </div>
-                        <select
-                            value={selectedLocation}
-                            onChange={(e) => handleLocationChange(e.target.value)}
-                            className="text-black text-xs rounded px-2 py-1"
-                        >
-                            {Object.entries(mockLocations).map(([key, location]) => (
-                                <option key={key} value={key}>{location.name}</option>
-                            ))}
-                        </select>
                     </div>
                 </div>
                 
                 {/* Create Post */}
-                <div className="p-4 bg-white bg-opacity-90 backdrop-blur-sm border-b border-ocean-200">
-                    <textarea
-                        ref={textareaRef}
-                        value={newPostContent}
-                        onChange={(e) => setNewPostContent(e.target.value)}
-                        placeholder="What's biting today? Share your catch, spot, or tip..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ocean-500 resize-none min-h-[60px] max-h-[120px]"
-                        maxLength={200}
-                        rows={1}
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                        <span className="text-sm text-gray-500">
-                            {newPostContent.length}/200 characters
-                        </span>
-                        <button
-                            onClick={handleCreatePost}
-                            disabled={!newPostContent.trim() || !isOnline}
-                            className="px-4 py-2 bg-ocean-600 text-white rounded-lg hover:bg-ocean-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
-                        >
-                            <span>🎣</span>
-                            <span>Cast</span>
-                        </button>
+                <div className="m-4 border border-slate-200 bg-white/95 backdrop-blur-sm rounded-lg">
+                    <div className="p-4">
+                        <textarea
+                            ref={textareaRef}
+                            value={newPostContent}
+                            onChange={(e) => setNewPostContent(e.target.value)}
+                            placeholder="What's biting today? Share your catch, spot, or tip..."
+                            className="w-full min-h-[80px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 resize-none focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                            maxLength={200}
+                        />
+                        <div className="flex justify-between items-center mt-3">
+                            <span className="text-sm text-slate-500">
+                                {newPostContent.length}/200 characters
+                            </span>
+                            <button
+                                onClick={handleCreatePost}
+                                disabled={!newPostContent.trim() || !isOnline}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span>🎣</span>
+                                <span>Cast</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
                 {/* Posts Feed */}
                 <div className="p-4">
                     {filteredPosts.length === 0 ? (
-                        <div className="text-center text-white bg-ocean-600 bg-opacity-20 backdrop-blur-sm rounded-lg p-8">
-                            <span className="text-4xl mb-4 block">🎣</span>
-                            <h3 className="text-lg font-semibold mb-2">No casts in your area</h3>
-                            <p className="text-sm opacity-90">Be the first to share what's happening on the water!</p>
+                        <div className="border border-slate-200 bg-white/95 backdrop-blur-sm rounded-lg">
+                            <div className="p-8 text-center">
+                                <span className="text-4xl mb-4 block">🎣</span>
+                                <h3 className="text-lg font-semibold text-slate-900 mb-2">No casts in your area</h3>
+                                <p className="text-sm text-slate-600">Be the first to share what's happening on the water!</p>
+                            </div>
                         </div>
                     ) : (
                         filteredPosts.map(post => (
@@ -641,7 +710,7 @@ const App = () => {
                 </div>
                 
                 {/* Footer */}
-                <div className="p-4 text-center text-white text-sm bg-ocean-700 bg-opacity-20 backdrop-blur-sm">
+                <div className="p-4 text-center text-white/90 text-sm bg-blue-900/20 backdrop-blur-sm">
                     <p>🎣 Tight lines and good catches!</p>
                     <p className="text-xs mt-1 opacity-75">Anonymous • Location-based • Fishing community</p>
                 </div>
