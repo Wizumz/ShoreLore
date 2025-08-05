@@ -81,10 +81,27 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // Mock locations for testing
 const mockLocations = {
-    seattle: { lat: 47.6062, lng: -122.3321 },
-    miami: { lat: 25.7617, lng: -80.1918 },
-    chicago: { lat: 41.8781, lng: -87.6298 },
-    denver: { lat: 39.7392, lng: -104.9903 }
+    seattle: { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
+    miami: { lat: 25.7617, lng: -80.1918, name: 'Miami, FL' },
+    chicago: { lat: 41.8781, lng: -87.6298, name: 'Chicago, IL' },
+    denver: { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' }
+};
+
+// Get approximate location name from coordinates
+const getApproximateLocation = (lat, lng) => {
+    // Find closest mock location for demo purposes
+    let closestLocation = null;
+    let closestDistance = Infinity;
+    
+    Object.entries(mockLocations).forEach(([key, location]) => {
+        const distance = calculateDistance(lat, lng, location.lat, location.lng);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestLocation = location.name;
+        }
+    });
+    
+    return closestLocation || 'Unknown Area';
 };
 
 // ASCII Art for fishing
@@ -148,7 +165,7 @@ const UsernameSetup = ({ onUsernameSet }) => {
                             value={username}
                             onChange={(e) => setUsername(e.target.value.toUpperCase())}
                             placeholder="Enter username"
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-600"
+                            className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
                             maxLength={20}
                         />
                         <div className="text-xs terminal-accent">
@@ -159,14 +176,14 @@ const UsernameSetup = ({ onUsernameSet }) => {
                     <div className="grid grid-cols-2 gap-2">
                         <button 
                             onClick={generateNew}
-                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600"
+                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700"
                         >
                             Generate New
                         </button>
                         <button 
                             onClick={handleContinue}
                             disabled={!username.trim() || username.trim().length < 3}
-                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
+                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
                         >
                             Start Fishing
                         </button>
@@ -217,7 +234,7 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
                             type="text"
                             value={newUsername}
                             onChange={(e) => setNewUsername(e.target.value.toUpperCase())}
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-600"
+                            className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
                             maxLength={20}
                         />
                         <div className="text-xs terminal-accent">
@@ -228,14 +245,14 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
                     <div className="grid grid-cols-2 gap-2">
                         <button 
                             onClick={onCancel}
-                            className="h-10 px-3 py-2 border-2 border-red-600 bg-white text-red-600 text-sm font-bold hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
+                            className="h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
                         >
                             Cancel
                         </button>
                         <button 
                             onClick={handleSave}
                             disabled={!newUsername.trim() || newUsername.trim().length < 3}
-                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
+                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
                         >
                             Save
                         </button>
@@ -292,9 +309,9 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
         <div className="mb-4 terminal-card p-4">
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-red-600 text-white flex items-center justify-center text-xs font-bold">
-                        {post.author.charAt(0)}
-                    </div>
+                                    <div className="w-8 h-8 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
+                    {post.author.charAt(0)}
+                </div>
                     <div>
                         <div className="font-bold terminal-text text-sm">{post.author}</div>
                         <div className="text-xs terminal-accent">
@@ -306,16 +323,16 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                     onClick={handleReport}
                     className={`text-xs px-2 py-1 border-2 ${
                         isReported 
-                            ? 'border-red-600 bg-red-100 text-red-700' 
-                            : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
-                    } focus:outline-none focus:ring-2 focus:ring-red-600 font-bold`}
+                            ? 'border-navy-700 bg-navy-100 text-navy-800' 
+                            : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
+                    } focus:outline-none focus:ring-2 focus:ring-navy-700 font-bold`}
                     disabled={isReported}
                 >
                     {isReported ? 'Reported' : 'Report'}
                 </button>
             </div>
             
-            <div className="mb-3 p-3 bg-white border-2 border-red-600">
+            <div className="mb-3 p-3 bg-white border-2 border-navy-700">
                 <div className="terminal-text text-sm font-mono">{post.content}</div>
             </div>
             
@@ -326,8 +343,8 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                         className={`px-3 py-1 text-xs font-bold border-2 ${
                             userVote?.type === 'up' 
                                 ? 'border-green-600 bg-green-100 text-green-700' 
-                                : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
-                        } focus:outline-none focus:ring-2 focus:ring-red-600`}
+                                : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
+                        } focus:outline-none focus:ring-2 focus:ring-navy-700`}
                     >
                         ▲ {post.upvotes}
                     </button>
@@ -336,16 +353,16 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                         onClick={() => handleVote('down')}
                         className={`px-3 py-1 text-xs font-bold border-2 ${
                             userVote?.type === 'down' 
-                                ? 'border-red-600 bg-red-100 text-red-700' 
-                                : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
-                        } focus:outline-none focus:ring-2 focus:ring-red-600`}
+                                ? 'border-navy-700 bg-navy-100 text-navy-800' 
+                                : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
+                        } focus:outline-none focus:ring-2 focus:ring-navy-700`}
                     >
                         ▼ {post.downvotes}
                     </button>
                     
                     <div className={`px-2 py-1 text-xs font-bold ${
                         post.score > 0 ? 'text-green-600' : 
-                        post.score < 0 ? 'text-red-700' : 'terminal-text'
+                        post.score < 0 ? 'text-navy-800' : 'terminal-text'
                     }`}>
                         Score: {post.score > 0 ? '+' : ''}{post.score}
                     </div>
@@ -353,18 +370,18 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                 
                 <button
                     onClick={() => setShowComments(!showComments)}
-                    className="px-3 py-1 text-xs font-bold border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="px-3 py-1 text-xs font-bold border-2 border-navy-700 bg-white text-navy-700 hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
                 >
                     💬 {postComments.length}
                 </button>
             </div>
             
             {showComments && (
-                <div className="mt-4 space-y-3 border-t-2 border-red-600 pt-4">
+                <div className="mt-4 space-y-3 border-t-2 border-navy-700 pt-4">
                     {postComments.map(comment => (
-                        <div key={comment.id} className="bg-gray-100 border-2 border-red-600 p-2">
+                        <div key={comment.id} className="bg-gray-100 border-2 border-navy-700 p-2">
                             <div className="flex items-center space-x-2 mb-1">
-                                <div className="w-4 h-4 bg-red-600 text-white flex items-center justify-center text-xs font-bold">
+                                <div className="w-4 h-4 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
                                     {comment.author.charAt(0)}
                                 </div>
                                 <span className="font-bold terminal-text text-xs">{comment.author}</span>
@@ -379,13 +396,13 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             placeholder="Add a comment..."
-                            className="flex-1 h-16 px-2 py-1 terminal-input text-xs font-mono focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
+                            className="flex-1 h-16 px-2 py-1 terminal-input text-xs font-mono focus:outline-none focus:ring-2 focus:ring-navy-700 resize-none"
                             maxLength={200}
                         />
                         <button
                             onClick={handleComment}
                             disabled={!commentText.trim()}
-                            className="px-3 py-1 terminal-button text-xs font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
+                            className="px-3 py-1 terminal-button text-xs font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
                         >
                             Send
                         </button>
@@ -413,6 +430,7 @@ const App = () => {
     const [showUsernameSetup, setShowUsernameSetup] = useState(false);
     const [showUsernameChange, setShowUsernameChange] = useState(false);
     const [sortBy, setSortBy] = useState('hot'); // 'hot' or 'new'
+    const [currentLocationName, setCurrentLocationName] = useState('');
     
     const textareaRef = useRef(null);
     
@@ -444,18 +462,22 @@ const App = () => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        setUserLocation({
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        });
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        setUserLocation({ lat, lng });
+                        setCurrentLocationName(getApproximateLocation(lat, lng));
                     },
                     () => {
                         // Use mock location if geolocation fails
-                        setUserLocation(mockLocations[selectedLocation]);
+                        const mockLoc = mockLocations[selectedLocation];
+                        setUserLocation(mockLoc);
+                        setCurrentLocationName(mockLoc.name);
                     }
                 );
             } else {
-                setUserLocation(mockLocations[selectedLocation]);
+                const mockLoc = mockLocations[selectedLocation];
+                setUserLocation(mockLoc);
+                setCurrentLocationName(mockLoc.name);
             }
         };
         
@@ -536,7 +558,7 @@ const App = () => {
                     userLocation.lat, userLocation.lng,
                     post.location.lat, post.location.lng
                 );
-                return distance <= 5;
+                return distance <= 15;
             }
             return true;
         });
@@ -767,7 +789,7 @@ const App = () => {
                             <div className="text-right">
                                 <button 
                                     onClick={() => setShowUsernameChange(true)}
-                                    className="text-sm font-bold hover:bg-red-700 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-300"
+                                    className="text-sm font-bold hover:bg-navy-800 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-navy-300"
                                 >
                                     {user?.screenName}
                                 </button>
@@ -779,8 +801,17 @@ const App = () => {
                     </div>
                 </div>
                 
-                {/* Sort Categories */}
-                <div className="p-4">
+                {/* Location Info & Sort Categories */}
+                <div className="p-4 space-y-4">
+                    {/* Location Display */}
+                    <div className="terminal-card p-3">
+                        <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
+                        <div className="text-xs terminal-accent">
+                            {currentLocationName} • 15 mile radius
+                        </div>
+                    </div>
+                    
+                    {/* Sort Categories */}
                     <div className="terminal-card p-3">
                         <div className="text-sm font-bold terminal-text mb-2">Sort by:</div>
                         <div className="flex space-x-2">
@@ -789,8 +820,8 @@ const App = () => {
                                 className={`px-4 py-2 text-sm font-bold border-2 ${
                                     sortBy === 'hot' 
                                         ? 'terminal-button' 
-                                        : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
-                                } focus:outline-none focus:ring-2 focus:ring-red-600`}
+                                        : 'border-navy-600 bg-white text-navy-600 hover:bg-navy-50'
+                                } focus:outline-none focus:ring-2 focus:ring-navy-600`}
                             >
                                 🔥 Hot
                             </button>
@@ -799,8 +830,8 @@ const App = () => {
                                 className={`px-4 py-2 text-sm font-bold border-2 ${
                                     sortBy === 'new' 
                                         ? 'terminal-button' 
-                                        : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
-                                } focus:outline-none focus:ring-2 focus:ring-red-600`}
+                                        : 'border-navy-600 bg-white text-navy-600 hover:bg-navy-50'
+                                } focus:outline-none focus:ring-2 focus:ring-navy-600`}
                             >
                                 ⭐ New
                             </button>
@@ -817,7 +848,7 @@ const App = () => {
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                             placeholder="What's biting today? Share your catch, spot, or tip..."
-                            className="w-full h-20 px-3 py-2 terminal-input text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-red-600"
+                            className="w-full h-20 px-3 py-2 terminal-input text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-navy-700"
                             maxLength={200}
                         />
                         <div className="flex justify-between items-center mt-3">
@@ -827,7 +858,7 @@ const App = () => {
                             <button
                                 onClick={handleCreatePost}
                                 disabled={!newPostContent.trim() || !isOnline}
-                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
+                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
                             >
                                 🎣 Cast
                             </button>
@@ -863,7 +894,7 @@ const App = () => {
                 </div>
                 
                 {/* Footer */}
-                <div className="p-4 text-center text-xs terminal-accent bg-gray-100 border-t-2 border-red-600">
+                <div className="p-4 text-center text-xs terminal-accent bg-gray-100 border-t-2 border-navy-700">
                     <div>🎣 Tight lines and good catches!</div>
                     <div>Anonymous • Location-based • Fishing community</div>
                 </div>
