@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, master, cursor/deploy-to-github-pages-3cba ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:

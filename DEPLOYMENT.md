@@ -19,9 +19,9 @@ To complete the GitHub Pages deployment, you need to:
    - Under "Source", select "GitHub Actions" (not "Deploy from a branch")
    - This tells GitHub to use the workflow we created instead of trying to build from a branch
 
-3. **Merge the Deployment Branch** (if needed):
-   - Create a pull request to merge `cursor/deploy-to-github-pages-3cba` into your main branch
-   - Or switch your default branch to include the workflow file
+3. **Deployment Branch** ✅:
+   - The deployment workflow has been merged into the main branch
+   - Future deployments will automatically trigger on pushes to main
 
 ## Expected Deployment URL
 
@@ -30,7 +30,7 @@ Once configured, your site will be available at:
 
 ## How It Works
 
-- The workflow triggers on pushes to main/master branches
+- The workflow triggers on pushes to the main branch
 - It uploads the entire repository as a static site artifact
 - GitHub Pages serves the `index.html` file and all assets
 - No build process is needed since you're using CDN-based React
