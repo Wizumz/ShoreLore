@@ -47,7 +47,7 @@ const generateScreenName = () => {
     const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
     const noun = nouns[Math.floor(Math.random() * nouns.length)];
     
-    return `${adj}_${noun}_${numbers}`;
+    return `${adj}${noun}${numbers}`;
 };
 
 // Get or create user identity
@@ -111,11 +111,11 @@ const UsernameSetup = ({ onUsernameSet }) => {
 
     const handleContinue = () => {
         if (username.trim().length < 3) {
-            alert('[ERROR] USERNAME MUST BE AT LEAST 3 CHARACTERS');
+            alert('Username must be at least 3 characters');
             return;
         }
         if (username.trim().length > 20) {
-            alert('[ERROR] USERNAME MUST BE 20 CHARACTERS OR LESS');
+            alert('Username must be 20 characters or less');
             return;
         }
         onUsernameSet(username.trim().toUpperCase());
@@ -131,28 +131,28 @@ const UsernameSetup = ({ onUsernameSet }) => {
                 <div className="text-center space-y-4">
                     <div className="ascii-art text-xs terminal-accent">{FISHING_ASCII}</div>
                     <div className="text-xl font-bold terminal-text">
-                        [SYSTEM] INITIALIZE_USER_PROTOCOL
+                        Welcome to Hookr
                     </div>
                     <div className="text-sm terminal-text">
-                        &gt; ENTER_TERMINAL_ACCESS_CREDENTIALS
+                        Choose your angler name to get started
                     </div>
                 </div>
                 
                 <div className="space-y-4 mt-6">
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
-                            [INPUT] ANGLER_HANDLE:
+                            Your angler name:
                         </label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value.toUpperCase())}
-                            placeholder="ENTER_USERNAME"
+                            placeholder="Enter username"
                             className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-600"
                             maxLength={20}
                         />
                         <div className="text-xs terminal-accent">
-                            [{username.length}/20] CHARS_ALLOCATED
+                            {username.length}/20 characters
                         </div>
                     </div>
 
@@ -161,21 +161,21 @@ const UsernameSetup = ({ onUsernameSet }) => {
                             onClick={generateNew}
                             className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600"
                         >
-                            [RNG] NEW_ID
+                            Generate New
                         </button>
                         <button 
                             onClick={handleContinue}
                             disabled={!username.trim() || username.trim().length < 3}
                             className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
                         >
-                            [EXEC] LOGIN
+                            Start Fishing
                         </button>
                     </div>
 
                     <div className="text-center text-xs terminal-text mt-4 space-y-1">
-                        <div>&gt; ANONYMOUS_PROTOCOL_ACTIVE</div>
-                        <div>&gt; LOCATION_BASED_FISHING_NETWORK</div>
-                        <div>&gt; SECURE_CATCH_SHARING_ENABLED</div>
+                        <div>• Anonymous fishing community</div>
+                        <div>• Location-based posts</div>
+                        <div>• Share catches, spots, and tips</div>
                     </div>
                 </div>
             </div>
@@ -189,11 +189,11 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
 
     const handleSave = () => {
         if (newUsername.trim().length < 3) {
-            alert('[ERROR] USERNAME MUST BE AT LEAST 3 CHARACTERS');
+            alert('Username must be at least 3 characters');
             return;
         }
         if (newUsername.trim().length > 20) {
-            alert('[ERROR] USERNAME MUST BE 20 CHARACTERS OR LESS');
+            alert('Username must be 20 characters or less');
             return;
         }
         onSave(newUsername.trim().toUpperCase());
@@ -204,14 +204,14 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
             <div className="w-full max-w-md terminal-card p-6">
                 <div className="text-center mb-4">
                     <div className="text-lg font-bold terminal-text">
-                        [SYSTEM] MODIFY_USER_HANDLE
+                        Change Username
                     </div>
                 </div>
                 
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
-                            [INPUT] NEW_ANGLER_HANDLE:
+                            New username:
                         </label>
                         <input
                             type="text"
@@ -221,7 +221,7 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
                             maxLength={20}
                         />
                         <div className="text-xs terminal-accent">
-                            [{newUsername.length}/20] CHARS_ALLOCATED
+                            {newUsername.length}/20 characters
                         </div>
                     </div>
 
@@ -230,14 +230,14 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
                             onClick={onCancel}
                             className="h-10 px-3 py-2 border-2 border-red-600 bg-white text-red-600 text-sm font-bold hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
                         >
-                            [ESC] CANCEL
+                            Cancel
                         </button>
                         <button 
                             onClick={handleSave}
                             disabled={!newUsername.trim() || newUsername.trim().length < 3}
                             className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
                         >
-                            [SAVE] UPDATE
+                            Save
                         </button>
                     </div>
                 </div>
@@ -296,9 +296,9 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                         {post.author.charAt(0)}
                     </div>
                     <div>
-                        <div className="font-bold terminal-text text-sm">[USER] {post.author}</div>
+                        <div className="font-bold terminal-text text-sm">{post.author}</div>
                         <div className="text-xs terminal-accent">
-                            [TIME] {getTimeAgo(post.timestamp)} | [DIST] {post.location.distance}MI
+                            {getTimeAgo(post.timestamp)} • {post.location.distance}mi away
                         </div>
                     </div>
                 </div>
@@ -311,12 +311,11 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                     } focus:outline-none focus:ring-2 focus:ring-red-600 font-bold`}
                     disabled={isReported}
                 >
-                    {isReported ? '[REPORTED]' : '[FLAG]'}
+                    {isReported ? 'Reported' : 'Report'}
                 </button>
             </div>
             
             <div className="mb-3 p-3 bg-white border-2 border-red-600">
-                <div className="text-xs terminal-accent mb-1">&gt; CAST_MESSAGE:</div>
                 <div className="terminal-text text-sm font-mono">{post.content}</div>
             </div>
             
@@ -330,7 +329,7 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                                 : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
                         } focus:outline-none focus:ring-2 focus:ring-red-600`}
                     >
-                        [▲] {post.upvotes}
+                        ▲ {post.upvotes}
                     </button>
                     
                     <button
@@ -341,14 +340,14 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                                 : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
                         } focus:outline-none focus:ring-2 focus:ring-red-600`}
                     >
-                        [▼] {post.downvotes}
+                        ▼ {post.downvotes}
                     </button>
                     
                     <div className={`px-2 py-1 text-xs font-bold ${
                         post.score > 0 ? 'text-green-600' : 
                         post.score < 0 ? 'text-red-700' : 'terminal-text'
                     }`}>
-                        [SCORE] {post.score > 0 ? '+' : ''}{post.score}
+                        Score: {post.score > 0 ? '+' : ''}{post.score}
                     </div>
                 </div>
                 
@@ -356,21 +355,20 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                     onClick={() => setShowComments(!showComments)}
                     className="px-3 py-1 text-xs font-bold border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600"
                 >
-                    [MSGS] {postComments.length}
+                    💬 {postComments.length}
                 </button>
             </div>
             
             {showComments && (
                 <div className="mt-4 space-y-3 border-t-2 border-red-600 pt-4">
-                    <div className="text-xs terminal-accent font-bold">&gt; COMMENT_THREAD:</div>
                     {postComments.map(comment => (
                         <div key={comment.id} className="bg-gray-100 border-2 border-red-600 p-2">
                             <div className="flex items-center space-x-2 mb-1">
                                 <div className="w-4 h-4 bg-red-600 text-white flex items-center justify-center text-xs font-bold">
                                     {comment.author.charAt(0)}
                                 </div>
-                                <span className="font-bold terminal-text text-xs">[USER] {comment.author}</span>
-                                <span className="text-xs terminal-accent">[{getTimeAgo(comment.timestamp)}]</span>
+                                <span className="font-bold terminal-text text-xs">{comment.author}</span>
+                                <span className="text-xs terminal-accent">{getTimeAgo(comment.timestamp)}</span>
                             </div>
                             <div className="terminal-text text-xs font-mono pl-6">{comment.content}</div>
                         </div>
@@ -380,7 +378,7 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                         <textarea
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="TYPE_COMMENT_HERE..."
+                            placeholder="Add a comment..."
                             className="flex-1 h-16 px-2 py-1 terminal-input text-xs font-mono focus:outline-none focus:ring-2 focus:ring-red-600 resize-none"
                             maxLength={200}
                         />
@@ -389,11 +387,11 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                             disabled={!commentText.trim()}
                             className="px-3 py-1 terminal-button text-xs font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
                         >
-                            [SEND]
+                            Send
                         </button>
                     </div>
                     <div className="text-xs terminal-accent">
-                        [{commentText.length}/200] CHARS_USED
+                        {commentText.length}/200 characters
                     </div>
                 </div>
             )}
@@ -732,7 +730,7 @@ const App = () => {
     
     // Handle reporting
     const handleReport = (postId) => {
-        console.log('[SYSTEM] POST_FLAGGED:', postId);
+        console.log('Post reported:', postId);
         // In a real app, this would send to moderation
     };
     
@@ -758,25 +756,23 @@ const App = () => {
                 {/* Header */}
                 <div className="terminal-header sticky top-0 z-40 p-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="text-lg font-bold">
-                                ╔══════════════╗
+                        <div className="flex items-center space-x-2">
+                            <span className="text-2xl">🎣</span>
+                            <div>
+                                <div className="text-lg font-bold">Hookr</div>
+                                <div className="text-xs">Fishing Community</div>
                             </div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-xl font-bold">HOOKR_TERMINAL</div>
-                            <div className="text-xs">FISHING_NETWORK_V1.0</div>
-                        </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
                             <div className="text-right">
                                 <button 
                                     onClick={() => setShowUsernameChange(true)}
                                     className="text-sm font-bold hover:bg-red-700 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-300"
                                 >
-                                    [USER] {user?.screenName}
+                                    {user?.screenName}
                                 </button>
                                 <div className="text-xs">
-                                    [NET] {isOnline ? 'ONLINE' : 'OFFLINE'}
+                                    {isOnline ? '🟢 Online' : '🔴 Offline'}
                                 </div>
                             </div>
                         </div>
@@ -786,7 +782,7 @@ const App = () => {
                 {/* Sort Categories */}
                 <div className="p-4">
                     <div className="terminal-card p-3">
-                        <div className="text-sm font-bold terminal-text mb-2">[SORT] SELECT_FEED_TYPE:</div>
+                        <div className="text-sm font-bold terminal-text mb-2">Sort by:</div>
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => setSortBy('hot')}
@@ -796,7 +792,7 @@ const App = () => {
                                         : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
                                 } focus:outline-none focus:ring-2 focus:ring-red-600`}
                             >
-                                [HOT] TRENDING_CASTS
+                                🔥 Hot
                             </button>
                             <button
                                 onClick={() => setSortBy('new')}
@@ -806,7 +802,7 @@ const App = () => {
                                         : 'border-red-600 bg-white text-red-600 hover:bg-red-50'
                                 } focus:outline-none focus:ring-2 focus:ring-red-600`}
                             >
-                                [NEW] LATEST_CASTS
+                                ⭐ New
                             </button>
                         </div>
                     </div>
@@ -815,25 +811,25 @@ const App = () => {
                 {/* Create Post */}
                 <div className="p-4">
                     <div className="terminal-card p-4">
-                        <div className="text-sm font-bold terminal-text mb-2">[INPUT] NEW_CAST_MESSAGE:</div>
+                        <div className="text-sm font-bold terminal-text mb-2">Share your catch:</div>
                         <textarea
                             ref={textareaRef}
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
-                            placeholder="ENTER_FISHING_REPORT_HERE..."
+                            placeholder="What's biting today? Share your catch, spot, or tip..."
                             className="w-full h-20 px-3 py-2 terminal-input text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-red-600"
                             maxLength={200}
                         />
                         <div className="flex justify-between items-center mt-3">
                             <div className="text-xs terminal-accent">
-                                [{newPostContent.length}/200] CHARS_USED
+                                {newPostContent.length}/200 characters
                             </div>
                             <button
                                 onClick={handleCreatePost}
                                 disabled={!newPostContent.trim() || !isOnline}
                                 className="px-4 py-2 terminal-button text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 disabled:terminal-button:disabled"
                             >
-                                [EXEC] BROADCAST_CAST
+                                🎣 Cast
                             </button>
                         </div>
                     </div>
@@ -841,19 +837,14 @@ const App = () => {
                 
                 {/* Posts Feed */}
                 <div className="p-4">
-                    <div className="text-sm font-bold terminal-text mb-4">
-                        [FEED] {sortBy.toUpperCase()}_CASTS_IN_AREA:
-                    </div>
                     {filteredPosts.length === 0 ? (
                         <div className="terminal-card p-8 text-center">
-                            <div className="ascii-art text-xs terminal-accent mb-4">
-                                {`    ><(((º>`}
-                            </div>
+                            <div className="text-4xl mb-4">🎣</div>
                             <div className="text-sm font-bold terminal-text mb-2">
-                                [STATUS] NO_CASTS_DETECTED
+                                No casts in your area
                             </div>
                             <div className="text-xs terminal-accent">
-                                &gt; INITIALIZE_FIRST_CAST_IN_ZONE
+                                Be the first to share what's happening on the water!
                             </div>
                         </div>
                     ) : (
@@ -873,9 +864,8 @@ const App = () => {
                 
                 {/* Footer */}
                 <div className="p-4 text-center text-xs terminal-accent bg-gray-100 border-t-2 border-red-600">
-                    <div>&gt; HOOKR_TERMINAL_ACTIVE</div>
-                    <div>&gt; ANONYMOUS_FISHING_NETWORK</div>
-                    <div>&gt; LOCATION_BASED_PROTOCOL</div>
+                    <div>🎣 Tight lines and good catches!</div>
+                    <div>Anonymous • Location-based • Fishing community</div>
                 </div>
             </div>
         </div>
