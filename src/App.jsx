@@ -47,45 +47,7 @@ const DEVICE_PERSISTENCE_OPTIONS = [
     }
 ];
 
-// Fishy Score Tiers and Icons
-const FISHY_TIERS = [
-    { min: 0, max: 49, name: 'Minnow', icon: '🐟', color: '#6b7280' },
-    { min: 50, max: 99, name: 'Bass', icon: '🐠', color: '#059669' },
-    { min: 100, max: 199, name: 'Salmon', icon: '🎣', color: '#dc2626' },
-    { min: 200, max: 399, name: 'Shark', icon: '🦈', color: '#7c3aed' },
-    { min: 400, max: 799, name: 'Whale', icon: '🐋', color: '#ea580c' },
-    { min: 800, max: Infinity, name: 'Kraken', icon: '🐙', color: '#1e3a8a' }
-];
 
-// Calculate Fishy Score
-const calculateFishyScore = (posts, userVotes, comments) => {
-    const userPosts = posts || [];
-    const userComments = comments || [];
-    
-    // Base points for activity
-    let score = 0;
-    score += userPosts.length * 10; // 10 points per post
-    score += userComments.length * 5; // 5 points per comment
-    
-    // Bonus points for upvotes
-    userPosts.forEach(post => {
-        score += (post.upvotes || 0) * 3; // 3 points per upvote
-        score -= (post.downvotes || 0) * 1; // -1 point per downvote
-    });
-    
-    // Bonus for engagement (posts with comments)
-    const postsWithComments = userPosts.filter(post => 
-        userComments.some(comment => comment.postId === post.id)
-    );
-    score += postsWithComments.length * 5; // 5 bonus points for engaging posts
-    
-    return Math.max(0, score); // Never negative
-};
-
-// Get Fishy Tier from Score
-const getFishyTier = (score) => {
-    return FISHY_TIERS.find(tier => score >= tier.min && score <= tier.max) || FISHY_TIERS[0];
-};
 
 // Comprehensive US Cities Database (500+ major cities with focus on coastal/fishing areas)
 const US_CITIES = [
@@ -557,6 +519,24 @@ const getUserIdentity = (customUsername = null, selectedColor = null) => {
     return user;
 };
 
+// Location settings persistence
+const saveLocationSettings = (location, radius) => {
+    const settings = {
+        customLocation: location,
+        locationRadius: radius,
+        savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('hookr_location_settings', JSON.stringify(settings));
+};
+
+const loadLocationSettings = () => {
+    const settings = localStorage.getItem('hookr_location_settings');
+    if (settings) {
+        return JSON.parse(settings);
+    }
+    return { customLocation: null, locationRadius: 10 }; // Default values
+};
+
 // Calculate distance between two coordinates (Haversine formula)
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 3959; // Earth's radius in miles
@@ -727,8 +707,6 @@ const UsernameSetup = ({ onUsernameSet }) => {
 const AccountModal = ({ isOpen, onClose, user, userStats }) => {
     if (!isOpen) return null;
 
-    const fishyTier = getFishyTier(userStats.fishyScore);
-
     return (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="w-full max-w-md terminal-card p-6 max-h-[80vh] overflow-y-auto">
@@ -742,20 +720,15 @@ const AccountModal = ({ isOpen, onClose, user, userStats }) => {
                 </div>
                 
                 <div className="space-y-4">
-                    {/* Fishy Score Display */}
+                    {/* User Info */}
                     <div className="bg-navy-50 p-4 rounded border">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm font-bold terminal-text">Fishy Score</div>
-                            <div className="flex items-center space-x-2">
-                                <span style={{ color: fishyTier.color, fontSize: '20px' }}>{fishyTier.icon}</span>
-                                <span className="text-sm font-bold" style={{ color: fishyTier.color }}>
-                                    {fishyTier.name}
-                                </span>
+                        <div className="text-center">
+                            <div className="text-lg font-bold" style={{ color: user?.color?.value || '#1e3a8a' }}>
+                                {user?.screenName}
                             </div>
-                        </div>
-                        <div className="text-2xl font-bold terminal-text">{userStats.fishyScore}</div>
-                        <div className="text-xs terminal-accent mt-1">
-                            Based on posts, votes, and engagement
+                            <div className="text-xs terminal-accent mt-1">
+                                Angler since {new Date(user?.createdAt || Date.now()).toLocaleDateString()}
+                            </div>
                         </div>
                     </div>
 
@@ -1130,16 +1103,6 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                             <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
                                 {post.author}
                             </div>
-                            {post.authorFishyScore !== undefined && (
-                                <div className="flex items-center space-x-1">
-                                    <span style={{ fontSize: '14px', color: getFishyTier(post.authorFishyScore).color }}>
-                                        {getFishyTier(post.authorFishyScore).icon}
-                                    </span>
-                                    <span className="text-xs font-bold" style={{ color: getFishyTier(post.authorFishyScore).color }}>
-                                        {post.authorFishyScore}
-                                    </span>
-                                </div>
-                            )}
                         </div>
                         <div className="text-xs terminal-accent">
                             {getTimeAgo(post.timestamp)} • {post.location.distance}mi away
@@ -1266,17 +1229,25 @@ const App = () => {
     const [customLocation, setCustomLocation] = useState(null);
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [locationRadius, setLocationRadius] = useState(10);
-    const [userStats, setUserStats] = useState({ posts: [], comments: [], fishyScore: 0 });
+    const [userStats, setUserStats] = useState({ posts: [], comments: [] });
     
     const textareaRef = useRef(null);
     
-    // Check if user needs to set up username
+    // Check if user needs to set up username and load location settings
     useEffect(() => {
         const userData = localStorage.getItem('hookr_user');
         if (!userData) {
             setShowUsernameSetup(true);
         } else {
             setUser(JSON.parse(userData));
+        }
+        
+        // Load saved location settings
+        const locationSettings = loadLocationSettings();
+        setLocationRadius(locationSettings.locationRadius);
+        if (locationSettings.customLocation) {
+            setCustomLocation(locationSettings.customLocation);
+            setCurrentLocationName(locationSettings.customLocation.name);
         }
     }, []);
     
@@ -1347,6 +1318,13 @@ const App = () => {
             calculateUserStats();
         }
     }, [posts, comments, user, userVotes]);
+
+    // Save location radius when it changes
+    useEffect(() => {
+        if (locationRadius !== 10) { // Only save if different from default
+            saveLocationSettings(customLocation, locationRadius);
+        }
+    }, [locationRadius, customLocation]);
     
     // Handle username setup
     const handleUsernameSet = (username, color) => {
@@ -1363,9 +1341,8 @@ const App = () => {
         
         const userPosts = posts.filter(post => post.authorId === user.id);
         const userComments = comments.filter(comment => comment.authorId === user.id);
-        const fishyScore = calculateFishyScore(userPosts, userVotes, userComments);
         
-        setUserStats({ posts: userPosts, comments: userComments, fishyScore });
+        setUserStats({ posts: userPosts, comments: userComments });
     };
     
     // Handle location change
@@ -1383,6 +1360,8 @@ const App = () => {
                         setCustomLocation(null);
                         const locationName = getApproximateLocation(coords.lat, coords.lng);
                         setCurrentLocationName(locationName);
+                        // Save settings (null custom location means use GPS)
+                        saveLocationSettings(null, locationRadius);
                     },
                     () => {
                         console.error('Failed to get current location');
@@ -1395,6 +1374,8 @@ const App = () => {
             setUserLocation(newLocation);
             setCustomLocation(newLocation);
             setCurrentLocationName(newLocation.name);
+            // Save settings
+            saveLocationSettings(newLocation, locationRadius);
         }
     };
 
@@ -1492,7 +1473,7 @@ const App = () => {
             author: user.screenName,
             authorId: user.id,
             authorColor: user.color,
-            authorFishyScore: userStats.fishyScore,
+
             timestamp: new Date().toISOString(),
             upvotes: 0,
             downvotes: 0,
@@ -1713,16 +1694,6 @@ const App = () => {
                                 style={{ color: user?.color?.value || '#1e3a8a' }}
                             >
                                 <span>{user?.screenName}</span>
-                                {userStats.fishyScore > 0 && (
-                                    <div className="flex items-center space-x-1">
-                                        <span style={{ fontSize: '12px', color: getFishyTier(userStats.fishyScore).color }}>
-                                            {getFishyTier(userStats.fishyScore).icon}
-                                        </span>
-                                        <span className="text-xs font-bold" style={{ color: getFishyTier(userStats.fishyScore).color }}>
-                                            {userStats.fishyScore}
-                                        </span>
-                                    </div>
-                                )}
                             </button>
                         </div>
                     </div>
