@@ -118,29 +118,40 @@ const getCoordinatesFromZip = async (zipCode) => {
     return zipToCoords[zipCode] || null;
 };
 
-// Mock locations for testing
-const mockLocations = {
+// Major city locations for quick selection
+const PRESET_LOCATIONS = {
     seattle: { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
     miami: { lat: 25.7617, lng: -80.1918, name: 'Miami, FL' },
     chicago: { lat: 41.8781, lng: -87.6298, name: 'Chicago, IL' },
-    denver: { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' }
+    denver: { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' },
+    nyc: { lat: 40.7128, lng: -74.0060, name: 'New York, NY' },
+    la: { lat: 34.0522, lng: -118.2437, name: 'Los Angeles, CA' },
+    austin: { lat: 30.2672, lng: -97.7431, name: 'Austin, TX' },
+    boston: { lat: 42.3601, lng: -71.0589, name: 'Boston, MA' }
 };
 
 // Get approximate location name from coordinates
 const getApproximateLocation = (lat, lng) => {
-    // Find closest mock location for demo purposes
+    // Find the closest major city for general area identification
     let closestLocation = null;
     let closestDistance = Infinity;
     
-    Object.entries(mockLocations).forEach(([key, location]) => {
+    Object.entries(PRESET_LOCATIONS).forEach(([key, location]) => {
         const distance = calculateDistance(lat, lng, location.lat, location.lng);
         if (distance < closestDistance) {
             closestDistance = distance;
-            closestLocation = location.name;
+            closestLocation = location;
         }
     });
     
-    return closestLocation || 'Unknown Area';
+    if (!closestLocation) return 'Unknown Area';
+    
+    // If very close to a major city (within 25 miles), use the city name
+    if (closestDistance <= 25) {
+        return closestLocation.name;
+    } else {
+        return `${Math.round(closestDistance)} miles from ${closestLocation.name}`;
+    }
 };
 
 // ASCII Art for fishing
@@ -164,6 +175,7 @@ const FISHING_ASCII = `
 // Username Setup Component
 const UsernameSetup = ({ onUsernameSet }) => {
     const [username, setUsername] = useState(generateScreenName());
+    const [selectedColor, setSelectedColor] = useState(USERNAME_COLORS[0]);
 
     const handleContinue = () => {
         if (username.trim().length < 3) {
@@ -174,7 +186,7 @@ const UsernameSetup = ({ onUsernameSet }) => {
             alert('Username must be 20 characters or less');
             return;
         }
-        onUsernameSet(username.trim().toUpperCase());
+        onUsernameSet(username.trim().toUpperCase(), selectedColor);
     };
 
     const generateNew = () => {
@@ -210,6 +222,34 @@ const UsernameSetup = ({ onUsernameSet }) => {
                         <div className="text-xs terminal-accent">
                             {username.length}/20 characters
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold terminal-text block">
+                            Choose your color:
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {USERNAME_COLORS.map((color) => (
+                                <button
+                                    key={color.name}
+                                    onClick={() => setSelectedColor(color)}
+                                    className={`h-10 rounded border-2 ${
+                                        selectedColor.name === color.name 
+                                            ? 'border-navy-700 ring-2 ring-navy-300' 
+                                            : 'border-gray-300 hover:border-gray-400'
+                                    } focus:outline-none focus:ring-2 focus:ring-navy-700`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                />
+                            ))}
+                        </div>
+                        <div className="text-xs terminal-accent">
+                            Preview: <span className={selectedColor.textClass} style={{ fontWeight: 'bold' }}>{username}</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 text-xs terminal-text">
+                        ⚠️ <strong>Note:</strong> You cannot change your username or color after creating your account. Choose carefully!
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -249,10 +289,11 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
 
     const presetLocations = [
         { id: 'current', name: 'Use Current Location', coords: null },
-        { id: 'seattle', name: 'Seattle, WA', coords: mockLocations.seattle },
-        { id: 'miami', name: 'Miami, FL', coords: mockLocations.miami },
-        { id: 'chicago', name: 'Chicago, IL', coords: mockLocations.chicago },
-        { id: 'denver', name: 'Denver, CO', coords: mockLocations.denver }
+        ...Object.entries(PRESET_LOCATIONS).map(([key, location]) => ({
+            id: key,
+            name: location.name,
+            coords: location
+        }))
     ];
 
     const handleZipCodeSubmit = async () => {
@@ -401,99 +442,7 @@ const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPo
     );
 };
 
-// Username Change Modal Component
-const UsernameChangeModal = ({ currentUsername, currentColor, hasChangedName, onSave, onCancel }) => {
-    const [newUsername, setNewUsername] = useState(currentUsername);
-    const [selectedColor, setSelectedColor] = useState(currentColor);
 
-    const handleSave = () => {
-        if (newUsername.trim().length < 3) {
-            alert('Username must be at least 3 characters');
-            return;
-        }
-        if (newUsername.trim().length > 20) {
-            alert('Username must be 20 characters or less');
-            return;
-        }
-        onSave(newUsername.trim().toUpperCase(), selectedColor);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-md terminal-card p-6">
-                <div className="text-center mb-4">
-                    <div className="text-lg font-bold terminal-text">
-                        {hasChangedName ? 'Update Profile' : 'Change Username'}
-                    </div>
-                    {hasChangedName && (
-                        <div className="text-xs terminal-accent mt-1">
-                            You can only change your username once
-                        </div>
-                    )}
-                </div>
-                
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold terminal-text block">
-                            Username:
-                        </label>
-                        <input
-                            type="text"
-                            value={newUsername}
-                            onChange={(e) => setNewUsername(e.target.value.toUpperCase())}
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
-                            maxLength={20}
-                            disabled={hasChangedName}
-                        />
-                        <div className="text-xs terminal-accent">
-                            {newUsername.length}/20 characters
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold terminal-text block">
-                            Username color:
-                        </label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {USERNAME_COLORS.map((color) => (
-                                <button
-                                    key={color.name}
-                                    onClick={() => setSelectedColor(color)}
-                                    className={`h-10 rounded border-2 ${
-                                        selectedColor.name === color.name 
-                                            ? 'border-navy-700 ring-2 ring-navy-300' 
-                                            : 'border-gray-300 hover:border-gray-400'
-                                    } focus:outline-none focus:ring-2 focus:ring-navy-700`}
-                                    style={{ backgroundColor: color.value }}
-                                    title={color.name}
-                                />
-                            ))}
-                        </div>
-                        <div className="text-xs terminal-accent">
-                            Preview: <span className={selectedColor.textClass} style={{ fontWeight: 'bold' }}>{newUsername}</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <button 
-                            onClick={onCancel}
-                            className="h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleSave}
-                            disabled={!newUsername.trim() || newUsername.trim().length < 3}
-                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
-                        >
-                            Save
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // Post Component with terminal styling
 const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
@@ -660,11 +609,11 @@ const App = () => {
     const [newPostContent, setNewPostContent] = useState('');
     const [user, setUser] = useState(null);
     const [userLocation, setUserLocation] = useState(null);
-    const [selectedLocation, setSelectedLocation] = useState('seattle');
+
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [db, setDb] = useState(null);
     const [showUsernameSetup, setShowUsernameSetup] = useState(false);
-    const [showUsernameChange, setShowUsernameChange] = useState(false);
+
     const [sortBy, setSortBy] = useState('hot'); // 'hot' or 'new'
     const [currentLocationName, setCurrentLocationName] = useState('');
     const [showPostModal, setShowPostModal] = useState(false);
@@ -698,7 +647,7 @@ const App = () => {
                 console.error('Failed to initialize database:', error);
             }
             
-            // Get user location or use mock
+            // Get user location with enhanced GPS functionality
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -706,18 +655,27 @@ const App = () => {
                         const lng = position.coords.longitude;
                         setUserLocation({ lat, lng });
                         setCurrentLocationName(getApproximateLocation(lat, lng));
+                        console.log('GPS location acquired:', { lat, lng });
                     },
-                    () => {
-                        // Use mock location if geolocation fails
-                        const mockLoc = mockLocations[selectedLocation];
-                        setUserLocation(mockLoc);
-                        setCurrentLocationName(mockLoc.name);
+                    (error) => {
+                        console.error('GPS location failed:', error.message);
+                        // Fallback to a default location (Seattle) if GPS fails
+                        const fallbackLocation = PRESET_LOCATIONS.seattle;
+                        setUserLocation(fallbackLocation);
+                        setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000 // 5 minutes cache
                     }
                 );
             } else {
-                const mockLoc = mockLocations[selectedLocation];
-                setUserLocation(mockLoc);
-                setCurrentLocationName(mockLoc.name);
+                console.warn('Geolocation not supported');
+                // Fallback to a default location
+                const fallbackLocation = PRESET_LOCATIONS.seattle;
+                setUserLocation(fallbackLocation);
+                setCurrentLocationName(`${fallbackLocation.name} (Default)`);
             }
         };
         
@@ -734,11 +692,11 @@ const App = () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, [user, selectedLocation]);
+    }, [user]);
     
     // Handle username setup
-    const handleUsernameSet = (username) => {
-        const userData = getUserIdentity(username);
+    const handleUsernameSet = (username, color) => {
+        const userData = getUserIdentity(username, color);
         setUser(userData);
         setShowUsernameSetup(false);
     };
@@ -773,60 +731,7 @@ const App = () => {
         }
     };
 
-    // Handle username change
-    const handleUsernameChange = async (newUsername, newColor) => {
-        const oldScreenName = user.screenName;
-        const userData = {
-            ...user,
-            screenName: newUsername,
-            color: newColor,
-            hasChangedName: true
-        };
-        setUser(userData);
-        localStorage.setItem('hookr_user', JSON.stringify(userData));
-        
-        // Update all user's posts with new username if name changed
-        if (oldScreenName !== newUsername && db) {
-            try {
-                const transaction = db.transaction(['posts', 'comments'], 'readwrite');
-                const postsStore = transaction.objectStore('posts');
-                const commentsStore = transaction.objectStore('comments');
-                
-                // Update posts
-                const postsRequest = postsStore.getAll();
-                postsRequest.onsuccess = () => {
-                    const allPosts = postsRequest.result;
-                    allPosts.forEach(post => {
-                        if (post.authorId === user.id) {
-                            post.author = newUsername;
-                            post.authorColor = newColor;
-                            postsStore.put(post);
-                        }
-                    });
-                };
-                
-                // Update comments
-                const commentsRequest = commentsStore.getAll();
-                commentsRequest.onsuccess = () => {
-                    const allComments = commentsRequest.result;
-                    allComments.forEach(comment => {
-                        if (comment.authorId === user.id) {
-                            comment.author = newUsername;
-                            comment.authorColor = newColor;
-                            commentsStore.put(comment);
-                        }
-                    });
-                };
-                
-                // Reload data to reflect changes
-                await loadData(db, user.id);
-            } catch (error) {
-                console.error('Failed to update posts with new username:', error);
-            }
-        }
-        
-        setShowUsernameChange(false);
-    };
+
     
     // Load data from IndexedDB
     const loadData = async (database, userId) => {
@@ -1102,16 +1007,7 @@ const App = () => {
                 isOnline={isOnline}
             />
 
-            {/* Username Change Modal */}
-            {showUsernameChange && (
-                <UsernameChangeModal
-                    currentUsername={user?.screenName}
-                    currentColor={user?.color}
-                    hasChangedName={user?.hasChangedName}
-                    onSave={handleUsernameChange}
-                    onCancel={() => setShowUsernameChange(false)}
-                />
-            )}
+
 
             {/* Floating Action Button */}
             <button
@@ -1134,12 +1030,12 @@ const App = () => {
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <button 
-                                onClick={() => setShowUsernameChange(true)}
-                                className="text-sm font-bold hover:bg-navy-800 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                            <div 
+                                className="text-sm font-bold px-2 py-1"
+                                style={{ color: user?.color?.value || '#1e3a8a' }}
                             >
                                 {user?.screenName}
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
