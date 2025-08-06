@@ -1,5 +1,71 @@
 const { useState, useEffect, useRef } = React;
 
+// Firebase Configuration (replace with your actual config)
+const firebaseConfig = {
+    // This would be replaced with actual Firebase config in production
+    apiKey: "demo-key",
+    authDomain: "hookr-fishing.firebaseapp.com",
+    projectId: "hookr-fishing",
+    storageBucket: "hookr-fishing.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef123456"
+};
+
+// Initialize Firebase (in production, this would use real config)
+let auth = null;
+let db_firebase = null;
+if (typeof firebase !== 'undefined') {
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        auth = firebase.auth();
+        db_firebase = firebase.firestore();
+    } catch (error) {
+        console.log('Firebase not available for demo');
+    }
+}
+
+// Fishy Score Tiers and Icons
+const FISHY_TIERS = [
+    { min: 0, max: 49, name: 'Minnow', icon: '🐟', color: '#6b7280' },
+    { min: 50, max: 99, name: 'Bass', icon: '🐠', color: '#059669' },
+    { min: 100, max: 199, name: 'Salmon', icon: '🎣', color: '#dc2626' },
+    { min: 200, max: 399, name: 'Shark', icon: '🦈', color: '#7c3aed' },
+    { min: 400, max: 799, name: 'Whale', icon: '🐋', color: '#ea580c' },
+    { min: 800, max: Infinity, name: 'Kraken', icon: '🐙', color: '#1e3a8a' }
+];
+
+// Calculate Fishy Score
+const calculateFishyScore = (posts, userVotes, comments) => {
+    const userPosts = posts || [];
+    const userComments = comments || [];
+    
+    // Base points for activity
+    let score = 0;
+    score += userPosts.length * 10; // 10 points per post
+    score += userComments.length * 5; // 5 points per comment
+    
+    // Bonus points for upvotes
+    userPosts.forEach(post => {
+        score += (post.upvotes || 0) * 3; // 3 points per upvote
+        score -= (post.downvotes || 0) * 1; // -1 point per downvote
+    });
+    
+    // Bonus for engagement (posts with comments)
+    const postsWithComments = userPosts.filter(post => 
+        userComments.some(comment => comment.postId === post.id)
+    );
+    score += postsWithComments.length * 5; // 5 bonus points for engaging posts
+    
+    return Math.max(0, score); // Never negative
+};
+
+// Get Fishy Tier from Score
+const getFishyTier = (score) => {
+    return FISHY_TIERS.find(tier => score >= tier.min && score <= tier.max) || FISHY_TIERS[0];
+};
+
 // Utility functions for IndexedDB
 const DB_NAME = 'HookrDB';
 const DB_VERSION = 1;
@@ -279,11 +345,367 @@ const UsernameSetup = ({ onUsernameSet }) => {
     );
 };
 
+// Login Modal Component
+const LoginModal = ({ isOpen, onClose, onLogin }) => {
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleEmailLogin = async () => {
+        if (!email.trim() || !password.trim()) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        if (isRegistering && password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // For demo purposes, simulate login
+            const mockUser = {
+                uid: crypto.randomUUID(),
+                email: email,
+                displayName: email.split('@')[0],
+                photoURL: null
+            };
+            
+            onLogin(mockUser);
+            onClose();
+        } catch (error) {
+            alert('Authentication failed: ' + error.message);
+        }
+        setIsLoading(false);
+    };
+
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
+        try {
+            // For demo purposes, simulate Google login
+            const mockUser = {
+                uid: crypto.randomUUID(),
+                email: 'user@gmail.com',
+                displayName: 'Google User',
+                photoURL: 'https://via.placeholder.com/40'
+            };
+            
+            onLogin(mockUser);
+            onClose();
+        } catch (error) {
+            alert('Google login failed: ' + error.message);
+        }
+        setIsLoading(false);
+    };
+
+    const handleAppleLogin = async () => {
+        setIsLoading(true);
+        try {
+            // For demo purposes, simulate Apple login
+            const mockUser = {
+                uid: crypto.randomUUID(),
+                email: 'user@icloud.com',
+                displayName: 'Apple User',
+                photoURL: null
+            };
+            
+            onLogin(mockUser);
+            onClose();
+        } catch (error) {
+            alert('Apple login failed: ' + error.message);
+        }
+        setIsLoading(false);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-md terminal-card p-6">
+                <div className="text-center mb-4">
+                    <div className="text-lg font-bold terminal-text">
+                        {isRegistering ? 'Create Account' : 'Sign In'}
+                    </div>
+                    <div className="text-xs terminal-accent mt-1">
+                        {isRegistering ? 'Join the fishing community' : 'Welcome back, angler!'}
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    {/* Email/Password Form */}
+                    <div className="space-y-3">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Email"
+                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        />
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        />
+                        {isRegistering && (
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm Password"
+                                className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+                            />
+                        )}
+                        <button 
+                            onClick={handleEmailLogin}
+                            disabled={isLoading}
+                            className="w-full h-10 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
+                        >
+                            {isLoading ? '...' : (isRegistering ? 'Create Account' : 'Sign In')}
+                        </button>
+                    </div>
+
+                    <div className="text-center text-xs terminal-accent">or</div>
+
+                    {/* Social Login Buttons */}
+                    <div className="space-y-2">
+                        <button 
+                            onClick={handleGoogleLogin}
+                            disabled={isLoading}
+                            className="w-full h-10 px-3 py-2 bg-red-600 text-white text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 flex items-center justify-center space-x-2"
+                        >
+                            <span>🔍</span>
+                            <span>Continue with Google</span>
+                        </button>
+                        <button 
+                            onClick={handleAppleLogin}
+                            disabled={isLoading}
+                            className="w-full h-10 px-3 py-2 bg-black text-white text-sm font-bold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 flex items-center justify-center space-x-2"
+                        >
+                            <span>🍎</span>
+                            <span>Continue with Apple</span>
+                        </button>
+                    </div>
+
+                    <div className="text-center">
+                        <button 
+                            onClick={() => setIsRegistering(!isRegistering)}
+                            className="text-xs text-navy-600 hover:text-navy-800 underline"
+                        >
+                            {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                        </button>
+                    </div>
+
+                    <div className="pt-2">
+                        <button 
+                            onClick={onClose}
+                            className="w-full h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Account Modal Component
+const AccountModal = ({ isOpen, onClose, user, userStats, onLogout }) => {
+    if (!isOpen) return null;
+
+    const fishyTier = getFishyTier(userStats.fishyScore);
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-md terminal-card p-6 max-h-[80vh] overflow-y-auto">
+                <div className="text-center mb-4">
+                    <div className="text-lg font-bold terminal-text">
+                        My Account
+                    </div>
+                    <div className="text-xs terminal-accent mt-1">
+                        {user?.email}
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    {/* Fishy Score Display */}
+                    <div className="bg-navy-50 p-4 rounded border">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-bold terminal-text">Fishy Score</div>
+                            <div className="flex items-center space-x-2">
+                                <span style={{ color: fishyTier.color, fontSize: '20px' }}>{fishyTier.icon}</span>
+                                <span className="text-sm font-bold" style={{ color: fishyTier.color }}>
+                                    {fishyTier.name}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="text-2xl font-bold terminal-text">{userStats.fishyScore}</div>
+                        <div className="text-xs terminal-accent mt-1">
+                            Based on posts, votes, and engagement
+                        </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-gray-50 p-3 rounded text-center">
+                            <div className="text-lg font-bold terminal-text">{userStats.posts.length}</div>
+                            <div className="text-xs terminal-accent">Posts</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded text-center">
+                            <div className="text-lg font-bold terminal-text">{userStats.comments.length}</div>
+                            <div className="text-xs terminal-accent">Comments</div>
+                        </div>
+                    </div>
+
+                    {/* Recent Posts */}
+                    <div className="space-y-2">
+                        <div className="text-sm font-bold terminal-text">Recent Posts</div>
+                        <div className="max-h-40 overflow-y-auto space-y-2">
+                            {userStats.posts.slice(0, 5).map((post, index) => (
+                                <div key={index} className="bg-gray-50 p-2 rounded text-xs">
+                                    <div className="font-mono">{post.content}</div>
+                                    <div className="text-gray-500 mt-1">
+                                        ▲ {post.upvotes || 0} ▼ {post.downvotes || 0}
+                                    </div>
+                                </div>
+                            ))}
+                            {userStats.posts.length === 0 && (
+                                <div className="text-xs terminal-accent text-center py-4">
+                                    No posts yet. Start sharing your catches!
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                        <button 
+                            onClick={onLogout}
+                            className="w-full h-10 px-3 py-2 bg-red-600 text-white text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                            Sign Out
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            className="w-full h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Google Maps Location Picker Component
+const GoogleMapsLocationPicker = ({ isOpen, onClose, onLocationSelected }) => {
+    const mapRef = useRef(null);
+    const [map, setMap] = useState(null);
+    const [marker, setMarker] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && !map && window.google) {
+            const mapInstance = new window.google.maps.Map(mapRef.current, {
+                center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+                zoom: 10,
+            });
+
+            const markerInstance = new window.google.maps.Marker({
+                position: { lat: 40.7128, lng: -74.0060 },
+                map: mapInstance,
+                draggable: true,
+            });
+
+            mapInstance.addListener('click', (e) => {
+                const lat = e.latLng.lat();
+                const lng = e.latLng.lng();
+                markerInstance.setPosition({ lat, lng });
+                setSelectedLocation({ lat, lng });
+            });
+
+            markerInstance.addListener('dragend', (e) => {
+                const lat = e.latLng.lat();
+                const lng = e.latLng.lng();
+                setSelectedLocation({ lat, lng });
+            });
+
+            setMap(mapInstance);
+            setMarker(markerInstance);
+            setSelectedLocation({ lat: 40.7128, lng: -74.0060 });
+        }
+    }, [isOpen]);
+
+    const handleConfirm = () => {
+        if (selectedLocation) {
+            const locationName = getApproximateLocation(selectedLocation.lat, selectedLocation.lng);
+            onLocationSelected({
+                ...selectedLocation,
+                name: locationName
+            });
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-lg terminal-card p-6">
+                <div className="text-center mb-4">
+                    <div className="text-lg font-bold terminal-text">
+                        Pick Location on Map
+                    </div>
+                    <div className="text-xs terminal-accent mt-1">
+                        Click or drag the marker to set your location
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    <div 
+                        ref={mapRef}
+                        className="w-full h-64 bg-gray-200 border rounded"
+                        style={{ minHeight: '250px' }}
+                    >
+                        {!window.google && (
+                            <div className="flex items-center justify-center h-full text-sm terminal-accent">
+                                Loading Google Maps...
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <button 
+                            onClick={onClose}
+                            className="h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleConfirm}
+                            disabled={!selectedLocation}
+                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
+                        >
+                            Select Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Location Selection Modal Component
 const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation }) => {
     const [zipCode, setZipCode] = useState('');
     const [selectedPreset, setSelectedPreset] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showMapPicker, setShowMapPicker] = useState(false);
 
     if (!isOpen) return null;
 
@@ -359,6 +781,19 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
 
                     <div className="text-center text-xs terminal-accent">or</div>
 
+                    {/* Map Picker */}
+                    <div className="space-y-2">
+                        <button 
+                            onClick={() => setShowMapPicker(true)}
+                            className="w-full h-10 px-3 py-2 bg-green-600 text-white text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center space-x-2"
+                        >
+                            <span>🗺️</span>
+                            <span>Select on Map</span>
+                        </button>
+                    </div>
+
+                    <div className="text-center text-xs terminal-accent">or</div>
+
                     {/* Preset Locations */}
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
@@ -376,6 +811,16 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                             ))}
                         </div>
                     </div>
+
+                    {/* Google Maps Location Picker */}
+                    <GoogleMapsLocationPicker
+                        isOpen={showMapPicker}
+                        onClose={() => setShowMapPicker(false)}
+                        onLocationSelected={(location) => {
+                            onLocationSet(location);
+                            setShowMapPicker(false);
+                        }}
+                    />
 
                     <div className="pt-2">
                         <button 
@@ -494,8 +939,20 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                     {post.author.charAt(0)}
                 </div>
                     <div>
-                        <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
-                            {post.author}
+                        <div className="flex items-center space-x-2">
+                            <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
+                                {post.author}
+                            </div>
+                            {post.authorFishyScore !== undefined && (
+                                <div className="flex items-center space-x-1">
+                                    <span style={{ fontSize: '14px', color: getFishyTier(post.authorFishyScore).color }}>
+                                        {getFishyTier(post.authorFishyScore).icon}
+                                    </span>
+                                    <span className="text-xs font-bold" style={{ color: getFishyTier(post.authorFishyScore).color }}>
+                                        {post.authorFishyScore}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                         <div className="text-xs terminal-accent">
                             {getTimeAgo(post.timestamp)} • {post.location.distance}mi away
@@ -620,6 +1077,10 @@ const App = () => {
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [zipCodeInput, setZipCodeInput] = useState('');
     const [customLocation, setCustomLocation] = useState(null);
+    const [showAccountModal, setShowAccountModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [authUser, setAuthUser] = useState(null);
+    const [userStats, setUserStats] = useState({ posts: [], comments: [], fishyScore: 0 });
     
     const textareaRef = useRef(null);
     
@@ -693,12 +1154,48 @@ const App = () => {
             window.removeEventListener('offline', handleOffline);
         };
     }, [user]);
+
+    // Recalculate user stats when data changes
+    useEffect(() => {
+        if (user && posts && comments) {
+            calculateUserStats();
+        }
+    }, [posts, comments, user, userVotes]);
     
     // Handle username setup
     const handleUsernameSet = (username, color) => {
         const userData = getUserIdentity(username, color);
         setUser(userData);
         setShowUsernameSetup(false);
+    };
+
+    // Handle authentication
+    const handleLogin = (authUser) => {
+        setAuthUser(authUser);
+        // Link auth user with local user or create new one
+        const userData = getUserIdentity(authUser.displayName || authUser.email.split('@')[0]);
+        setUser({ ...userData, authUser });
+        setShowLoginModal(false);
+        calculateUserStats();
+    };
+
+    const handleLogout = () => {
+        setAuthUser(null);
+        setUser(null);
+        setUserStats({ posts: [], comments: [], fishyScore: 0 });
+        localStorage.removeItem('hookr_user');
+        setShowAccountModal(false);
+    };
+
+    // Calculate user statistics
+    const calculateUserStats = () => {
+        if (!user || !posts || !comments) return;
+        
+        const userPosts = posts.filter(post => post.authorId === user.id);
+        const userComments = comments.filter(comment => comment.authorId === user.id);
+        const fishyScore = calculateFishyScore(userPosts, userVotes, userComments);
+        
+        setUserStats({ posts: userPosts, comments: userComments, fishyScore });
     };
     
     // Handle location change
@@ -825,6 +1322,7 @@ const App = () => {
             author: user.screenName,
             authorId: user.id,
             authorColor: user.color,
+            authorFishyScore: userStats.fishyScore,
             timestamp: new Date().toISOString(),
             upvotes: 0,
             downvotes: 0,
@@ -988,7 +1486,23 @@ const App = () => {
     }
     
     return (
-        <div className="min-h-screen bg-gray-50 terminal-text">
+        <div className="min-h-screen bg-gray-50 terminal-text overflow-x-hidden">
+            {/* Login Modal */}
+            <LoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                onLogin={handleLogin}
+            />
+
+            {/* Account Modal */}
+            <AccountModal
+                isOpen={showAccountModal}
+                onClose={() => setShowAccountModal(false)}
+                user={authUser}
+                userStats={userStats}
+                onLogout={handleLogout}
+            />
+
             {/* Location Selection Modal */}
             <LocationSelectionModal
                 isOpen={showLocationModal}
@@ -1012,40 +1526,63 @@ const App = () => {
             {/* Floating Action Button */}
             <button
                 onClick={() => setShowPostModal(true)}
-                className="fixed bottom-6 right-6 w-14 h-14 bg-navy-700 text-white rounded-full shadow-lg hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300 flex items-center justify-center text-2xl z-40"
+                className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-navy-700 text-white rounded-full shadow-lg hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300 flex items-center justify-center text-xl sm:text-2xl z-40"
+                style={{ maxWidth: 'calc(100vw - 2rem)' }}
                 title="Create new post"
             >
                 +
             </button>
             
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto px-2 sm:px-0">
                 {/* Header */}
-                <div className="terminal-header sticky top-0 z-40 p-4">
+                <div className="terminal-header sticky top-0 z-40 p-3 sm:p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <span className="text-2xl">🎣</span>
+                            <span className="text-xl sm:text-2xl">🎣</span>
                             <div>
-                                <div className="text-lg font-bold">Hookr</div>
-                                <div className="text-xs">Fishing Community</div>
+                                <div className="text-base sm:text-lg font-bold">Hookr</div>
+                                <div className="text-xs hidden sm:block">Fishing Community</div>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            <div 
-                                className="text-sm font-bold px-2 py-1"
-                                style={{ color: user?.color?.value || '#1e3a8a' }}
-                            >
-                                {user?.screenName}
-                            </div>
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                            {authUser ? (
+                                <>
+                                    <button
+                                        onClick={() => setShowAccountModal(true)}
+                                        className="flex items-center space-x-1 text-xs sm:text-sm font-bold px-2 py-1 hover:bg-navy-50 rounded focus:outline-none focus:ring-2 focus:ring-navy-300"
+                                        style={{ color: user?.color?.value || '#1e3a8a' }}
+                                    >
+                                        <span>{user?.screenName}</span>
+                                        {userStats.fishyScore > 0 && (
+                                            <div className="flex items-center space-x-1">
+                                                <span style={{ fontSize: '12px', color: getFishyTier(userStats.fishyScore).color }}>
+                                                    {getFishyTier(userStats.fishyScore).icon}
+                                                </span>
+                                                <span className="text-xs font-bold" style={{ color: getFishyTier(userStats.fishyScore).color }}>
+                                                    {userStats.fishyScore}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setShowLoginModal(true)}
+                                    className="text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 terminal-button hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                                >
+                                    Sign In
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
                 
                 {/* Location Info & Sort Categories */}
-                <div className="p-4 space-y-4">
+                <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                     {/* Location Display */}
                     <button 
                         onClick={() => setShowLocationModal(true)}
-                        className="p-3 w-full text-left hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                        className="p-3 w-full text-left hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-300 rounded"
                     >
                         <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
                         <div className="text-xs terminal-accent">
