@@ -662,6 +662,43 @@ const getApproximateLocation = (lat, lng) => {
     }
 };
 
+// Get nearest city/state for post display (more precise than approximate location)
+const getNearestCityState = (lat, lng) => {
+    // First try to find in US_CITIES database
+    let closestCity = null;
+    let closestDistance = Infinity;
+    
+    US_CITIES.forEach(city => {
+        const distance = calculateDistance(lat, lng, city.lat, city.lng);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestCity = city;
+        }
+    });
+    
+    if (closestCity && closestDistance <= 50) { // Within 50 miles
+        return `${closestCity.name}, ${closestCity.state}`;
+    }
+    
+    // Fallback to fishing locations
+    let closestLocation = null;
+    closestDistance = Infinity;
+    
+    Object.entries(STRIPED_BASS_LOCATIONS).forEach(([key, location]) => {
+        const distance = calculateDistance(lat, lng, location.lat, location.lng);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestLocation = location;
+        }
+    });
+    
+    if (closestLocation) {
+        return closestLocation.name;
+    }
+    
+    return 'Unknown Location';
+};
+
 // ASCII Art for fishing
 const FISHING_ASCII = `
     o                 o
@@ -1134,7 +1171,7 @@ const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPo
 
 
 // Post Component with terminal styling
-const Post = ({ post, onVote, onComment, onReport, userVotes, comments, isPinned = false, showLocation = false }) => {
+const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLocation = false }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [isReported, setIsReported] = useState(false);
@@ -1189,11 +1226,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, isPinned
                             </div>
                         </div>
                         <div className="text-xs terminal-accent">
-                            {getTimeAgo(post.timestamp)}
                             {showLocation && post.location.name ? (
-                                <> • 📍 {post.location.name}</>
+                                <>📍 {post.location.name}</>
+                            ) : post.location.nearestCity ? (
+                                <>📍 {post.location.nearestCity}</>
                             ) : (
-                                <> • {post.location.distance}mi away</>
+                                <>{post.location.distance}mi away</>
                             )}
                         </div>
                     </div>
@@ -1330,8 +1368,7 @@ const App = () => {
     const [postCount, setPostCount] = useState(0);
     const [voteCount, setVoteCount] = useState(0);
     
-    // Pinned posts and lazy loading
-    const [pinnedPosts, setPinnedPosts] = useState([]);
+    // Lazy loading
     const [loadedPostsCount, setLoadedPostsCount] = useState(20); // Start with 20 posts
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     
@@ -1365,25 +1402,6 @@ const App = () => {
                 const database = await initDB();
                 setDb(database);
                 await loadData(database, user.id);
-                
-                // Initialize pinned posts (mock data for now)
-                const mockPinnedPosts = [
-                    {
-                        id: 'pinned-1',
-                        content: '🚨 FISHING ALERT: Large school of stripers reported off Montauk Point! Best bite early morning with live eels.',
-                        author: 'FISHING_ADMIN',
-                        authorId: 'admin-1',
-                        authorColor: { name: 'Red', value: '#dc2626', textClass: 'text-red-600' },
-                        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-                        upvotes: 45,
-                        downvotes: 2,
-                        score: 43,
-                        location: { lat: 41.0486, lng: -71.8535, distance: 0, name: 'Montauk Point, NY' },
-                        isPinned: true,
-                        pinReason: 'Community Alert'
-                    }
-                ];
-                setPinnedPosts(mockPinnedPosts);
                 
             } catch (error) {
                 console.error('Failed to initialize database:', error);
@@ -1586,7 +1604,10 @@ const App = () => {
                     distance: userLocation ? Math.round(calculateDistance(
                         userLocation.lat, userLocation.lng, 
                         post.location.lat, post.location.lng
-                    ) * 10) / 10 : 0
+                    ) * 10) / 10 : 0,
+                    // Ensure nearestCity is available for coastwide display
+                    nearestCity: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng),
+                    name: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng)
                 }
             }));
             
@@ -1628,12 +1649,13 @@ const App = () => {
             return true;
         });
         
-        // Add distance calculation
+        // Add distance calculation and ensure nearestCity
         filteredPosts = filteredPosts.map(post => ({
             ...post,
             location: {
                 ...post.location,
-                distance: Math.round(calculateDistance(effectiveLocation?.lat || 0, effectiveLocation?.lng || 0, post.location.lat, post.location.lng) * 10) / 10
+                distance: Math.round(calculateDistance(effectiveLocation?.lat || 0, effectiveLocation?.lng || 0, post.location.lat, post.location.lng) * 10) / 10,
+                nearestCity: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng)
             }
         }));
         
@@ -1697,7 +1719,8 @@ const App = () => {
             location: {
                 lat: userLocation.lat,
                 lng: userLocation.lng,
-                distance: 0
+                distance: 0,
+                nearestCity: getNearestCityState(userLocation.lat, userLocation.lng)
             }
         };
         
@@ -2025,32 +2048,7 @@ const App = () => {
                 
                 {/* Posts Feed */}
                 <div className="p-4">
-                    {/* Pinned Posts - show only for hot and new, not coastwide */}
-                    {sortBy !== 'coastwide' && pinnedPosts.length > 0 && (
-                        <div className="mb-4">
-                            <div className="text-sm font-bold terminal-text mb-2 flex items-center">
-                                📌 Pinned Posts
-                            </div>
-                            {pinnedPosts.map(post => (
-                                <div key={post.id} className="mb-3">
-                                    <div className="bg-yellow-50 border-2 border-yellow-400 p-2 rounded">
-                                        <div className="text-xs text-yellow-700 font-bold mb-1">
-                                            📌 {post.pinReason}
-                                        </div>
-                                        <Post
-                                            post={post}
-                                            onVote={handleVote}
-                                            onComment={handleComment}
-                                            onReport={handleReport}
-                                            userVotes={userVotes}
-                                            comments={comments}
-                                            isPinned={true}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+
                     
                     {filteredPosts.length === 0 ? (
                         <div className="p-8 text-center">
