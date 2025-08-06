@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = React;
+import React, { useState, useEffect, useRef } from 'react';
 
 // Northeast Striped Bass Fishing Locations
 const STRIPED_BASS_LOCATIONS = {
@@ -434,7 +434,7 @@ const geocodeWithAPI = async (query) => {
 };
 
 // Utility functions for IndexedDB
-const DB_NAME = 'HookrDB';
+const DB_NAME = 'RipRapDB';
 const DB_VERSION = 1;
 
 const initDB = () => {
@@ -497,7 +497,7 @@ const USERNAME_COLORS = [
 
 // Get or create user identity
 const getUserIdentity = (customUsername = null, selectedColor = null) => {
-    let user = localStorage.getItem('hookr_user');
+    let user = localStorage.getItem('riprap_user');
     if (!user || customUsername) {
         const defaultColor = USERNAME_COLORS[0]; // Navy as default
         user = {
@@ -507,13 +507,13 @@ const getUserIdentity = (customUsername = null, selectedColor = null) => {
             hasChangedName: !!customUsername,
             createdAt: new Date().toISOString()
         };
-        localStorage.setItem('hookr_user', JSON.stringify(user));
+        localStorage.setItem('riprap_user', JSON.stringify(user));
     } else {
         user = JSON.parse(user);
         // Ensure color exists for existing users
         if (!user.color) {
             user.color = USERNAME_COLORS[0];
-            localStorage.setItem('hookr_user', JSON.stringify(user));
+            localStorage.setItem('riprap_user', JSON.stringify(user));
         }
     }
     return user;
@@ -526,11 +526,11 @@ const saveLocationSettings = (location, radius) => {
         locationRadius: radius,
         savedAt: new Date().toISOString()
     };
-    localStorage.setItem('hookr_location_settings', JSON.stringify(settings));
+    localStorage.setItem('riprap_location_settings', JSON.stringify(settings));
 };
 
 const loadLocationSettings = () => {
-    const settings = localStorage.getItem('hookr_location_settings');
+    const settings = localStorage.getItem('riprap_location_settings');
     if (settings) {
         return JSON.parse(settings);
     }
@@ -713,7 +713,7 @@ const FISHING_ASCII = `
               |
          ____/ \\____
         /           \\
-       |    HOOKR    |
+       |   RIPRAP   |
         \\___________/
 `;
 
@@ -744,7 +744,7 @@ const UsernameSetup = ({ onUsernameSet }) => {
                 <div className="text-center space-y-4">
                     <div className="ascii-art text-xs terminal-accent">{FISHING_ASCII}</div>
                     <div className="text-xl font-bold terminal-text">
-                        Welcome to Hookr
+                        Welcome to RipRap
                     </div>
                     <div className="text-sm terminal-text">
                         Choose your angler name to get started
@@ -1376,7 +1376,7 @@ const App = () => {
     
     // Check if user needs to set up username and load location settings
     useEffect(() => {
-        const userData = localStorage.getItem('hookr_user');
+        const userData = localStorage.getItem('riprap_user');
         if (!userData) {
             setShowUsernameSetup(true);
         } else {
@@ -1944,8 +1944,8 @@ const App = () => {
                         <div className="flex items-center space-x-2">
                             <span className="text-xl sm:text-2xl">🎣</span>
                             <div>
-                                <div className="text-base sm:text-lg font-bold">Hookr</div>
-                                <div className="text-xs hidden sm:block">Fishing Community</div>
+                                <div className="text-base sm:text-lg font-bold">RipRap</div>
+                                <div className="text-xs hidden sm:block">Share the Shore, Spill the Lore</div>
                             </div>
                         </div>
                         <div className="flex items-center space-x-1 sm:space-x-2">
@@ -2110,5 +2110,4 @@ const App = () => {
     );
 };
 
-// Render the app
-ReactDOM.render(<App />, document.getElementById('root'));
+export default App;

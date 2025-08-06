@@ -1,15 +1,8 @@
-### Next 
-I'm changing then name of the project to RipRap, make sure all references to Hookr are changed accordingly.
-1. Create a text logo with a handwritten, edgy, font, "RipRap"
-2. Favicon should be an R with the same font
-3. The site tagline/slogan will be, "Share the Shore, Spill the Lore"
-4. Prepare the repo/project for deploy to Netlify, which I will do next.
-
-# 🎣 Hookr - Fishing Community PWA
+# 🎣 RipRap - Share the Shore, Spill the Lore
 
 A Progressive Web App inspired by Yik Yak, designed specifically for fishing communities to anonymously share catches, fishing spots, and tips within a 5-mile radius.
 
-![Hookr Logo](./public/icons/icon-192x192.png)
+![RipRap Logo](./public/icons/icon-192x192.png)
 
 ## 🌊 Features
 
@@ -39,50 +32,43 @@ A Progressive Web App inspired by Yik Yak, designed specifically for fishing com
 ### Prerequisites
 - Modern web browser with PWA support
 - HTTPS connection (required for PWA features)
-- GitHub account for deployment
+- Node.js for development
 
 ### Local Development
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/Hookr.git
-   cd Hookr
+   git clone https://github.com/yourusername/RipRap.git
+   cd RipRap
    ```
 
-2. **Serve locally**:
+2. **Install dependencies**:
    ```bash
-   # Using Python
-   python3 -m http.server 8000
-   
-   # Using Node.js
-   npx serve .
-   
-   # Using PHP
-   php -S localhost:8000
+   npm install
    ```
 
-3. **Open in browser**:
-   Navigate to `http://localhost:8000`
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-### GitHub Pages Deployment
+4. **Open in browser**:
+   Navigate to `http://localhost:5173`
 
-1. **Create Repository**:
-   - Create a new repository named `Hookr` on GitHub
-   - Upload all project files to the repository
+### Netlify Deployment
 
-2. **Enable GitHub Pages**:
-   - Go to repository Settings
-   - Scroll to "Pages" section
-   - Select "Deploy from a branch"
-   - Choose "main" branch and "/ (root)" folder
-   - Click "Save"
+This project is optimized for Netlify deployment:
 
-3. **Configure for PWA**:
-   - Add `.nojekyll` file to root (already included)
-   - Ensure HTTPS is enabled (GitHub Pages default)
+1. **Build the project**:
+   ```bash
+   npm run build
+   ```
 
-4. **Access Your App**:
-   Your app will be available at: `https://yourusername.github.io/Hookr`
+2. **Deploy to Netlify**:
+   - Connect your repository to Netlify
+   - Set build command: `npm run build`
+   - Set publish directory: `dist`
+   - Deploy!
 
 ## 📱 Installation
 
@@ -126,14 +112,14 @@ A Progressive Web App inspired by Yik Yak, designed specifically for fishing com
 ## 🔧 Technical Details
 
 ### Architecture
-- **Frontend**: React (via CDN) + Tailwind CSS
+- **Frontend**: React + Vite + Tailwind CSS
 - **Storage**: IndexedDB for local data persistence
 - **PWA**: Service Worker + Web App Manifest
-- **Deployment**: Static files on GitHub Pages
+- **Deployment**: Static files on Netlify
 
 ### File Structure
 ```
-Hookr/
+RipRap/
 ├── index.html              # Main entry point
 ├── src/
 │   └── App.jsx            # React application code
@@ -142,7 +128,7 @@ Hookr/
 │   ├── sw.js             # Service worker
 │   └── icons/            # App icons (various sizes)
 ├── package.json          # Dependencies and scripts
-├── .nojekyll            # GitHub Pages configuration
+├── vite.config.js        # Vite configuration
 └── README.md            # This file
 ```
 
@@ -266,7 +252,7 @@ For issues, questions, or contributions:
 
 ## 🎣 Happy Fishing!
 
-Cast your line into the digital waters and connect with fellow anglers in your area. Tight lines! 
+Cast your line into the digital waters and connect with fellow anglers in your area. Share the Shore, Spill the Lore! 
 
 ---
 

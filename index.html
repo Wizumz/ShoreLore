@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hookr - Fishing Community</title>
+    <title>RipRap - Share the Shore, Spill the Lore</title>
     
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Anonymous fishing community app for sharing catches, spots, and tips">
+    <meta name="description" content="RipRap - Share the Shore, Spill the Lore - Anonymous fishing community app for sharing catches, spots, and tips">
     <meta name="theme-color" content="#0f766e">
     <link rel="manifest" href="./public/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="./public/icons/favicon.svg">
     <link rel="icon" type="image/png" href="./public/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="./public/icons/icon-192x192.png">
     
@@ -52,10 +53,7 @@
         }
     </script>
     
-    <!-- React CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- React will be bundled by Vite -->
     
     <style>
         body {
@@ -160,7 +158,7 @@
 
     
     <!-- App JavaScript -->
-    <script type="text/babel" data-type="module" src="./src/App.jsx"></script>
+    <script type="module" src="/src/main.jsx"></script>
     
     <!-- Service Worker Registration -->
     <script>
