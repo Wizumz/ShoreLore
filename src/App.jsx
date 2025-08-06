@@ -87,39 +87,388 @@ const getFishyTier = (score) => {
     return FISHY_TIERS.find(tier => score >= tier.min && score <= tier.max) || FISHY_TIERS[0];
 };
 
-// Popular US Cities for autocomplete (focusing on Northeast)
+// Comprehensive US Cities Database (500+ major cities with focus on coastal/fishing areas)
 const US_CITIES = [
+    // Northeast - Major Cities & Coastal Areas
     { name: 'Boston', state: 'MA', lat: 42.3601, lng: -71.0589 },
-    { name: 'New York City', state: 'NY', lat: 40.7128, lng: -74.0060 },
-    { name: 'Providence', state: 'RI', lat: 41.8240, lng: -71.4128 },
-    { name: 'Hartford', state: 'CT', lat: 41.7658, lng: -72.6734 },
-    { name: 'Portland', state: 'ME', lat: 43.6591, lng: -70.2568 },
-    { name: 'Burlington', state: 'VT', lat: 44.4759, lng: -73.2121 },
-    { name: 'Manchester', state: 'NH', lat: 42.9956, lng: -71.4548 },
-    { name: 'Baltimore', state: 'MD', lat: 39.2904, lng: -76.6122 },
-    { name: 'Washington', state: 'DC', lat: 38.9072, lng: -77.0369 },
-    { name: 'Philadelphia', state: 'PA', lat: 39.9526, lng: -75.1652 },
-    { name: 'Atlantic City', state: 'NJ', lat: 39.3643, lng: -74.4229 },
-    { name: 'Dover', state: 'DE', lat: 39.1612, lng: -75.5264 },
-    { name: 'Albany', state: 'NY', lat: 42.6526, lng: -73.7562 },
-    { name: 'Buffalo', state: 'NY', lat: 42.8864, lng: -78.8784 },
-    { name: 'Rochester', state: 'NY', lat: 43.1566, lng: -77.6088 },
-    { name: 'Bridgeport', state: 'CT', lat: 41.1865, lng: -73.1952 },
-    { name: 'New Haven', state: 'CT', lat: 41.3083, lng: -72.9279 },
+    { name: 'Cambridge', state: 'MA', lat: 42.3736, lng: -71.1097 },
     { name: 'Worcester', state: 'MA', lat: 42.2626, lng: -71.8023 },
     { name: 'Springfield', state: 'MA', lat: 42.1015, lng: -72.5898 },
-    { name: 'Newport', state: 'RI', lat: 41.4901, lng: -71.3128 }
+    { name: 'Lowell', state: 'MA', lat: 42.6334, lng: -71.3162 },
+    { name: 'Brockton', state: 'MA', lat: 42.0834, lng: -71.0184 },
+    { name: 'New Bedford', state: 'MA', lat: 41.6362, lng: -70.9342 },
+    { name: 'Quincy', state: 'MA', lat: 42.2529, lng: -71.0023 },
+    { name: 'Lynn', state: 'MA', lat: 42.4668, lng: -70.9495 },
+    { name: 'Fall River', state: 'MA', lat: 41.7015, lng: -71.1550 },
+    { name: 'Newton', state: 'MA', lat: 42.3370, lng: -71.2092 },
+    { name: 'Somerville', state: 'MA', lat: 42.3876, lng: -71.0995 },
+    { name: 'Lawrence', state: 'MA', lat: 42.7070, lng: -71.1631 },
+    { name: 'Framingham', state: 'MA', lat: 42.3793, lng: -71.4162 },
+    { name: 'Haverhill', state: 'MA', lat: 42.7762, lng: -71.0773 },
+    { name: 'Waltham', state: 'MA', lat: 42.3765, lng: -71.2356 },
+    { name: 'Malden', state: 'MA', lat: 42.4251, lng: -71.0662 },
+    { name: 'Brookline', state: 'MA', lat: 42.3317, lng: -71.1211 },
+    { name: 'Plymouth', state: 'MA', lat: 41.9584, lng: -70.6673 },
+    { name: 'Medford', state: 'MA', lat: 42.4184, lng: -71.1061 },
+    { name: 'Taunton', state: 'MA', lat: 41.9001, lng: -71.0897 },
+    { name: 'Chicopee', state: 'MA', lat: 42.1487, lng: -72.6078 },
+    { name: 'Weymouth', state: 'MA', lat: 42.2180, lng: -70.9395 },
+    { name: 'Revere', state: 'MA', lat: 42.4084, lng: -71.0120 },
+    { name: 'Peabody', state: 'MA', lat: 42.5279, lng: -70.9286 },
+    { name: 'Methuen', state: 'MA', lat: 42.7262, lng: -71.1909 },
+    { name: 'Barnstable', state: 'MA', lat: 41.7003, lng: -70.3002 },
+    { name: 'Pittsfield', state: 'MA', lat: 42.4501, lng: -73.2454 },
+    { name: 'Attleboro', state: 'MA', lat: 41.9443, lng: -71.2856 },
+    { name: 'Everett', state: 'MA', lat: 42.4084, lng: -71.0537 },
+    { name: 'Salem', state: 'MA', lat: 42.5195, lng: -70.8967 },
+    { name: 'Westfield', state: 'MA', lat: 42.1251, lng: -72.7495 },
+    { name: 'Leominster', state: 'MA', lat: 42.5251, lng: -71.7595 },
+    { name: 'Fitchburg', state: 'MA', lat: 42.5834, lng: -71.8023 },
+    { name: 'Beverly', state: 'MA', lat: 42.5584, lng: -70.8800 },
+    { name: 'Holyoke', state: 'MA', lat: 42.2043, lng: -72.6162 },
+    { name: 'Marlborough', state: 'MA', lat: 42.3459, lng: -71.5523 },
+    { name: 'Woburn', state: 'MA', lat: 42.4792, lng: -71.1523 },
+    { name: 'Chelsea', state: 'MA', lat: 42.3918, lng: -71.0328 },
+    { name: 'Gloucester', state: 'MA', lat: 42.6142, lng: -70.6631 },
+
+    // New York
+    { name: 'New York City', state: 'NY', lat: 40.7128, lng: -74.0060 },
+    { name: 'Buffalo', state: 'NY', lat: 42.8864, lng: -78.8784 },
+    { name: 'Rochester', state: 'NY', lat: 43.1566, lng: -77.6088 },
+    { name: 'Yonkers', state: 'NY', lat: 40.9312, lng: -73.8987 },
+    { name: 'Syracuse', state: 'NY', lat: 43.0481, lng: -76.1474 },
+    { name: 'Albany', state: 'NY', lat: 42.6526, lng: -73.7562 },
+    { name: 'New Rochelle', state: 'NY', lat: 40.9115, lng: -73.7823 },
+    { name: 'Mount Vernon', state: 'NY', lat: 40.9126, lng: -73.8370 },
+    { name: 'Schenectady', state: 'NY', lat: 42.8142, lng: -73.9396 },
+    { name: 'Utica', state: 'NY', lat: 43.1009, lng: -75.2327 },
+    { name: 'White Plains', state: 'NY', lat: 41.0340, lng: -73.7629 },
+    { name: 'Hempstead', state: 'NY', lat: 40.7062, lng: -73.6187 },
+    { name: 'Troy', state: 'NY', lat: 42.7284, lng: -73.6918 },
+    { name: 'Niagara Falls', state: 'NY', lat: 43.0962, lng: -79.0377 },
+    { name: 'Binghamton', state: 'NY', lat: 42.0987, lng: -75.9180 },
+    { name: 'Freeport', state: 'NY', lat: 40.6576, lng: -73.5832 },
+    { name: 'Valley Stream', state: 'NY', lat: 40.6642, lng: -73.7084 },
+    { name: 'Long Beach', state: 'NY', lat: 40.5885, lng: -73.6579 },
+    { name: 'Watertown', state: 'NY', lat: 43.9747, lng: -75.9107 },
+    { name: 'Jamestown', state: 'NY', lat: 42.0970, lng: -79.2353 },
+    { name: 'New York', state: 'NY', lat: 40.7128, lng: -74.0060 },
+    { name: 'Bronx', state: 'NY', lat: 40.8448, lng: -73.8648 },
+    { name: 'Brooklyn', state: 'NY', lat: 40.6782, lng: -73.9442 },
+    { name: 'Queens', state: 'NY', lat: 40.7282, lng: -73.7949 },
+    { name: 'Staten Island', state: 'NY', lat: 40.5795, lng: -74.1502 },
+    { name: 'Manhattan', state: 'NY', lat: 40.7831, lng: -73.9712 },
+    { name: 'Elmira', state: 'NY', lat: 42.0898, lng: -76.8077 },
+    { name: 'Tonawanda', state: 'NY', lat: 43.0126, lng: -78.8803 },
+    { name: 'Poughkeepsie', state: 'NY', lat: 41.7004, lng: -73.9209 },
+    { name: 'Newburgh', state: 'NY', lat: 41.5034, lng: -74.0104 },
+    { name: 'Middletown', state: 'NY', lat: 41.4459, lng: -74.4226 },
+
+    // Connecticut  
+    { name: 'Bridgeport', state: 'CT', lat: 41.1865, lng: -73.1952 },
+    { name: 'New Haven', state: 'CT', lat: 41.3083, lng: -72.9279 },
+    { name: 'Hartford', state: 'CT', lat: 41.7658, lng: -72.6734 },
+    { name: 'Stamford', state: 'CT', lat: 41.0534, lng: -73.5387 },
+    { name: 'Waterbury', state: 'CT', lat: 41.5581, lng: -73.0515 },
+    { name: 'Norwalk', state: 'CT', lat: 41.1175, lng: -73.4079 },
+    { name: 'Danbury', state: 'CT', lat: 41.3948, lng: -73.4540 },
+    { name: 'New Britain', state: 'CT', lat: 41.6612, lng: -72.7795 },
+    { name: 'West Haven', state: 'CT', lat: 41.2707, lng: -72.9470 },
+    { name: 'Greenwich', state: 'CT', lat: 41.0262, lng: -73.6284 },
+    { name: 'Hamden', state: 'CT', lat: 41.3959, lng: -72.9248 },
+    { name: 'Meriden', state: 'CT', lat: 41.5382, lng: -72.8070 },
+    { name: 'Bristol', state: 'CT', lat: 41.6712, lng: -72.9493 },
+    { name: 'West Hartford', state: 'CT', lat: 41.7620, lng: -72.7420 },
+    { name: 'Milford', state: 'CT', lat: 41.2223, lng: -73.0565 },
+    { name: 'Middletown', state: 'CT', lat: 41.5623, lng: -72.6506 },
+    { name: 'Norwich', state: 'CT', lat: 41.5242, lng: -72.0759 },
+    { name: 'New London', state: 'CT', lat: 41.3556, lng: -72.0995 },
+    { name: 'Torrington', state: 'CT', lat: 41.8007, lng: -73.1212 },
+    { name: 'Fairfield', state: 'CT', lat: 41.1612, lng: -73.2615 },
+
+    // Rhode Island
+    { name: 'Providence', state: 'RI', lat: 41.8240, lng: -71.4128 },
+    { name: 'Cranston', state: 'RI', lat: 41.7798, lng: -71.4371 },
+    { name: 'Warwick', state: 'RI', lat: 41.7001, lng: -71.4162 },
+    { name: 'Pawtucket', state: 'RI', lat: 41.8787, lng: -71.3826 },
+    { name: 'East Providence', state: 'RI', lat: 41.8137, lng: -71.3701 },
+    { name: 'Woonsocket', state: 'RI', lat: 42.0029, lng: -71.5147 },
+    { name: 'Newport', state: 'RI', lat: 41.4901, lng: -71.3128 },
+    { name: 'Central Falls', state: 'RI', lat: 41.8904, lng: -71.3926 },
+    { name: 'Westerly', state: 'RI', lat: 41.3776, lng: -71.8270 },
+    { name: 'Cumberland', state: 'RI', lat: 41.9665, lng: -71.4326 },
+
+    // Maine
+    { name: 'Portland', state: 'ME', lat: 43.6591, lng: -70.2568 },
+    { name: 'Lewiston', state: 'ME', lat: 44.1004, lng: -70.2148 },
+    { name: 'Bangor', state: 'ME', lat: 44.8016, lng: -68.7712 },
+    { name: 'South Portland', state: 'ME', lat: 43.6415, lng: -70.2409 },
+    { name: 'Auburn', state: 'ME', lat: 44.0979, lng: -70.2311 },
+    { name: 'Biddeford', state: 'ME', lat: 43.4926, lng: -70.4533 },
+    { name: 'Sanford', state: 'ME', lat: 43.4390, lng: -70.7740 },
+    { name: 'Saco', state: 'ME', lat: 43.5009, lng: -70.4428 },
+    { name: 'Augusta', state: 'ME', lat: 44.3106, lng: -69.7795 },
+    { name: 'Westbrook', state: 'ME', lat: 43.6770, lng: -70.3712 },
+    { name: 'Waterville', state: 'ME', lat: 44.5323, lng: -69.6317 },
+    { name: 'Presque Isle', state: 'ME', lat: 46.6811, lng: -68.0161 },
+    { name: 'Bar Harbor', state: 'ME', lat: 44.3876, lng: -68.2039 },
+    { name: 'Calais', state: 'ME', lat: 45.1737, lng: -67.2741 },
+    { name: 'Ellsworth', state: 'ME', lat: 44.5434, lng: -68.4198 },
+
+    // New Hampshire
+    { name: 'Manchester', state: 'NH', lat: 42.9956, lng: -71.4548 },
+    { name: 'Nashua', state: 'NH', lat: 42.7654, lng: -71.4676 },
+    { name: 'Concord', state: 'NH', lat: 43.2081, lng: -71.5376 },
+    { name: 'Derry', state: 'NH', lat: 42.8804, lng: -71.3273 },
+    { name: 'Dover', state: 'NH', lat: 43.1979, lng: -70.8737 },
+    { name: 'Rochester', state: 'NH', lat: 43.3042, lng: -70.9759 },
+    { name: 'Salem', state: 'NH', lat: 42.7876, lng: -71.2009 },
+    { name: 'Merrimack', state: 'NH', lat: 42.8659, lng: -71.4995 },
+    { name: 'Hudson', state: 'NH', lat: 42.7659, lng: -71.4342 },
+    { name: 'Londonderry', state: 'NH', lat: 42.8653, lng: -71.3739 },
+    { name: 'Keene', state: 'NH', lat: 42.9342, lng: -72.2815 },
+    { name: 'Portsmouth', state: 'NH', lat: 43.0718, lng: -70.7626 },
+    { name: 'Laconia', state: 'NH', lat: 43.5276, lng: -71.4703 },
+    { name: 'Hampton', state: 'NH', lat: 42.9373, lng: -70.8187 },
+
+    // Vermont
+    { name: 'Burlington', state: 'VT', lat: 44.4759, lng: -73.2121 },
+    { name: 'Essex', state: 'VT', lat: 44.4906, lng: -73.1129 },
+    { name: 'South Burlington', state: 'VT', lat: 44.4669, lng: -73.1709 },
+    { name: 'Colchester', state: 'VT', lat: 44.5434, lng: -73.1317 },
+    { name: 'Rutland', state: 'VT', lat: 43.6106, lng: -72.9726 },
+    { name: 'Bennington', state: 'VT', lat: 42.8781, lng: -73.1968 },
+    { name: 'Brattleboro', state: 'VT', lat: 42.8509, lng: -72.5579 },
+    { name: 'Milton', state: 'VT', lat: 44.6365, lng: -73.1151 },
+    { name: 'Hartford', state: 'VT', lat: 43.6506, lng: -72.3190 },
+    { name: 'Williston', state: 'VT', lat: 44.4434, lng: -73.0934 },
+    { name: 'Middlebury', state: 'VT', lat: 44.0154, lng: -73.1673 },
+    { name: 'Montpelier', state: 'VT', lat: 44.2601, lng: -72.5806 },
+
+    // Mid-Atlantic
+    { name: 'Philadelphia', state: 'PA', lat: 39.9526, lng: -75.1652 },
+    { name: 'Pittsburgh', state: 'PA', lat: 40.4406, lng: -79.9959 },
+    { name: 'Allentown', state: 'PA', lat: 40.6084, lng: -75.4901 },
+    { name: 'Erie', state: 'PA', lat: 42.1292, lng: -80.0851 },
+    { name: 'Reading', state: 'PA', lat: 40.3356, lng: -75.9269 },
+    { name: 'Scranton', state: 'PA', lat: 41.4090, lng: -75.6624 },
+    { name: 'Bethlehem', state: 'PA', lat: 40.6259, lng: -75.3704 },
+    { name: 'Lancaster', state: 'PA', lat: 40.0379, lng: -76.3055 },
+    { name: 'Harrisburg', state: 'PA', lat: 40.2732, lng: -76.8839 },
+    { name: 'York', state: 'PA', lat: 39.9626, lng: -76.7277 },
+    { name: 'Altoona', state: 'PA', lat: 40.5187, lng: -78.3947 },
+    { name: 'Wilkes-Barre', state: 'PA', lat: 41.2459, lng: -75.8813 },
+
+    { name: 'Newark', state: 'NJ', lat: 40.7357, lng: -74.1724 },
+    { name: 'Jersey City', state: 'NJ', lat: 40.7178, lng: -74.0431 },
+    { name: 'Paterson', state: 'NJ', lat: 40.9168, lng: -74.1718 },
+    { name: 'Elizabeth', state: 'NJ', lat: 40.6640, lng: -74.2107 },
+    { name: 'Edison', state: 'NJ', lat: 40.5187, lng: -74.4121 },
+    { name: 'Woodbridge', state: 'NJ', lat: 40.5576, lng: -74.2846 },
+    { name: 'Lakewood', state: 'NJ', lat: 40.0979, lng: -74.2179 },
+    { name: 'Toms River', state: 'NJ', lat: 39.9537, lng: -74.1979 },
+    { name: 'Hamilton', state: 'NJ', lat: 40.2290, lng: -74.6598 },
+    { name: 'Trenton', state: 'NJ', lat: 40.2206, lng: -74.7565 },
+    { name: 'Camden', state: 'NJ', lat: 39.9259, lng: -75.1196 },
+    { name: 'Clifton', state: 'NJ', lat: 40.8584, lng: -74.1638 },
+    { name: 'Brick', state: 'NJ', lat: 40.0473, lng: -74.1354 },
+    { name: 'Cherry Hill', state: 'NJ', lat: 39.9348, lng: -75.0307 },
+    { name: 'Passaic', state: 'NJ', lat: 40.8568, lng: -74.1279 },
+    { name: 'Union City', state: 'NJ', lat: 40.7662, lng: -74.0243 },
+    { name: 'Bayonne', state: 'NJ', lat: 40.6687, lng: -74.1143 },
+    { name: 'East Orange', state: 'NJ', lat: 40.7668, lng: -74.2049 },
+    { name: 'Vineland', state: 'NJ', lat: 39.4864, lng: -75.0260 },
+    { name: 'New Brunswick', state: 'NJ', lat: 40.4862, lng: -74.4518 },
+    { name: 'Hoboken', state: 'NJ', lat: 40.7439, lng: -74.0324 },
+    { name: 'Plainfield', state: 'NJ', lat: 40.6337, lng: -74.4071 },
+    { name: 'West New York', state: 'NJ', lat: 40.7878, lng: -74.0143 },
+    { name: 'Hackensack', state: 'NJ', lat: 40.8859, lng: -74.0437 },
+    { name: 'Sayreville', state: 'NJ', lat: 40.4595, lng: -74.3612 },
+    { name: 'Kearny', state: 'NJ', lat: 40.7684, lng: -74.1454 },
+    { name: 'Linden', state: 'NJ', lat: 40.6220, lng: -74.2446 },
+    { name: 'Atlantic City', state: 'NJ', lat: 39.3643, lng: -74.4229 },
+
+    { name: 'Baltimore', state: 'MD', lat: 39.2904, lng: -76.6122 },
+    { name: 'Columbia', state: 'MD', lat: 39.2037, lng: -76.8610 },
+    { name: 'Germantown', state: 'MD', lat: 39.1731, lng: -77.2717 },
+    { name: 'Silver Spring', state: 'MD', lat: 38.9912, lng: -77.0261 },
+    { name: 'Waldorf', state: 'MD', lat: 38.6206, lng: -76.9391 },
+    { name: 'Glen Burnie', state: 'MD', lat: 39.1626, lng: -76.6247 },
+    { name: 'Ellicott City', state: 'MD', lat: 39.2673, lng: -76.7983 },
+    { name: 'Frederick', state: 'MD', lat: 39.4143, lng: -77.4105 },
+    { name: 'Dundalk', state: 'MD', lat: 39.2709, lng: -76.5219 },
+    { name: 'Rockville', state: 'MD', lat: 39.0840, lng: -77.1528 },
+    { name: 'Bethesda', state: 'MD', lat: 38.9807, lng: -77.1020 },
+    { name: 'Gaithersburg', state: 'MD', lat: 39.1434, lng: -77.2014 },
+    { name: 'Annapolis', state: 'MD', lat: 38.9717, lng: -76.5010 },
+    { name: 'Bowie', state: 'MD', lat: 38.9426, lng: -76.7302 },
+    { name: 'Hagerstown', state: 'MD', lat: 39.6418, lng: -77.7200 },
+    { name: 'Cumberland', state: 'MD', lat: 39.6526, lng: -78.7625 },
+    { name: 'Salisbury', state: 'MD', lat: 38.3607, lng: -75.5994 },
+    { name: 'Ocean City', state: 'MD', lat: 38.3365, lng: -75.0849 },
+
+    { name: 'Washington', state: 'DC', lat: 38.9072, lng: -77.0369 },
+
+    { name: 'Wilmington', state: 'DE', lat: 39.7391, lng: -75.5398 },
+    { name: 'Dover', state: 'DE', lat: 39.1612, lng: -75.5264 },
+    { name: 'Newark', state: 'DE', lat: 39.6837, lng: -75.7497 },
+    { name: 'Middletown', state: 'DE', lat: 39.4495, lng: -75.7163 },
+    { name: 'Smyrna', state: 'DE', lat: 39.2998, lng: -75.6046 },
+    { name: 'Milford', state: 'DE', lat: 38.9129, lng: -75.4277 },
+    { name: 'Seaford', state: 'DE', lat: 38.6412, lng: -75.6110 },
+    { name: 'Georgetown', state: 'DE', lat: 38.6901, lng: -75.3855 },
+    { name: 'Elsmere', state: 'DE', lat: 39.7379, lng: -75.5924 },
+    { name: 'New Castle', state: 'DE', lat: 39.6620, lng: -75.5664 },
+
+    // Additional Popular US Cities for broader coverage
+    { name: 'Chicago', state: 'IL', lat: 41.8781, lng: -87.6298 },
+    { name: 'Los Angeles', state: 'CA', lat: 34.0522, lng: -118.2437 },
+    { name: 'Houston', state: 'TX', lat: 29.7604, lng: -95.3698 },
+    { name: 'Phoenix', state: 'AZ', lat: 33.4484, lng: -112.0740 },
+    { name: 'San Antonio', state: 'TX', lat: 29.4241, lng: -98.4936 },
+    { name: 'San Diego', state: 'CA', lat: 32.7157, lng: -117.1611 },
+    { name: 'Dallas', state: 'TX', lat: 32.7767, lng: -96.7970 },
+    { name: 'San Jose', state: 'CA', lat: 37.3382, lng: -121.8863 },
+    { name: 'Austin', state: 'TX', lat: 30.2672, lng: -97.7431 },
+    { name: 'Jacksonville', state: 'FL', lat: 30.3322, lng: -81.6557 },
+    { name: 'Fort Worth', state: 'TX', lat: 32.7555, lng: -97.3308 },
+    { name: 'Columbus', state: 'OH', lat: 39.9612, lng: -82.9988 },
+    { name: 'San Francisco', state: 'CA', lat: 37.7749, lng: -122.4194 },
+    { name: 'Charlotte', state: 'NC', lat: 35.2271, lng: -80.8431 },
+    { name: 'Indianapolis', state: 'IN', lat: 39.7684, lng: -86.1581 },
+    { name: 'Seattle', state: 'WA', lat: 47.6062, lng: -122.3321 },
+    { name: 'Denver', state: 'CO', lat: 39.7392, lng: -104.9903 },
+    { name: 'Detroit', state: 'MI', lat: 42.3314, lng: -83.0458 },
+    { name: 'Nashville', state: 'TN', lat: 36.1627, lng: -86.7816 },
+    { name: 'Memphis', state: 'TN', lat: 35.1495, lng: -90.0490 },
+    { name: 'Portland', state: 'OR', lat: 45.5152, lng: -122.6784 },
+    { name: 'Oklahoma City', state: 'OK', lat: 35.4676, lng: -97.5164 },
+    { name: 'Las Vegas', state: 'NV', lat: 36.1699, lng: -115.1398 },
+    { name: 'Louisville', state: 'KY', lat: 38.2527, lng: -85.7585 },
+    { name: 'Milwaukee', state: 'WI', lat: 43.0389, lng: -87.9065 },
+    { name: 'Albuquerque', state: 'NM', lat: 35.0844, lng: -106.6504 },
+    { name: 'Tucson', state: 'AZ', lat: 32.2226, lng: -110.9747 },
+    { name: 'Fresno', state: 'CA', lat: 36.7378, lng: -119.7871 },
+    { name: 'Sacramento', state: 'CA', lat: 38.5816, lng: -121.4944 },
+    { name: 'Kansas City', state: 'MO', lat: 39.0997, lng: -94.5786 },
+    { name: 'Mesa', state: 'AZ', lat: 33.4152, lng: -111.8315 },
+    { name: 'Virginia Beach', state: 'VA', lat: 36.8529, lng: -75.9780 },
+    { name: 'Atlanta', state: 'GA', lat: 33.7490, lng: -84.3880 },
+    { name: 'Colorado Springs', state: 'CO', lat: 38.8339, lng: -104.8214 },
+    { name: 'Omaha', state: 'NE', lat: 41.2565, lng: -95.9345 },
+    { name: 'Raleigh', state: 'NC', lat: 35.7796, lng: -78.6382 },
+    { name: 'Miami', state: 'FL', lat: 25.7617, lng: -80.1918 },
+    { name: 'Long Beach', state: 'CA', lat: 33.7701, lng: -118.1937 },
+    { name: 'Virginia Beach', state: 'VA', lat: 36.8529, lng: -75.9780 },
+    { name: 'Oakland', state: 'CA', lat: 37.8044, lng: -122.2712 },
+    { name: 'Minneapolis', state: 'MN', lat: 44.9778, lng: -93.2650 },
+    { name: 'Tulsa', state: 'OK', lat: 36.1540, lng: -95.9928 },
+    { name: 'Arlington', state: 'TX', lat: 32.7357, lng: -97.1081 },
+    { name: 'Tampa', state: 'FL', lat: 27.9506, lng: -82.4572 },
+    { name: 'New Orleans', state: 'LA', lat: 29.9511, lng: -90.0715 },
+    { name: 'Wichita', state: 'KS', lat: 37.6872, lng: -97.3301 },
+    { name: 'Cleveland', state: 'OH', lat: 41.4993, lng: -81.6944 },
+    { name: 'Bakersfield', state: 'CA', lat: 35.3733, lng: -119.0187 },
+    { name: 'Aurora', state: 'CO', lat: 39.7294, lng: -104.8319 },
+    { name: 'Anaheim', state: 'CA', lat: 33.8366, lng: -117.9143 },
+    { name: 'Honolulu', state: 'HI', lat: 21.3099, lng: -157.8581 },
+    { name: 'Santa Ana', state: 'CA', lat: 33.7455, lng: -117.8677 },
+    { name: 'Corpus Christi', state: 'TX', lat: 27.8006, lng: -97.3964 },
+    { name: 'Riverside', state: 'CA', lat: 33.9533, lng: -117.3962 },
+    { name: 'Lexington', state: 'KY', lat: 38.0406, lng: -84.5037 },
+    { name: 'Stockton', state: 'CA', lat: 37.9577, lng: -121.2908 },
+    { name: 'St. Paul', state: 'MN', lat: 44.9537, lng: -93.0900 },
+    { name: 'St. Louis', state: 'MO', lat: 38.6270, lng: -90.1994 },
+    { name: 'Pittsburgh', state: 'PA', lat: 40.4406, lng: -79.9959 },
+    { name: 'Anchorage', state: 'AK', lat: 61.2181, lng: -149.9003 },
+    { name: 'Cincinnati', state: 'OH', lat: 39.1031, lng: -84.5120 },
+    { name: 'Henderson', state: 'NV', lat: 36.0395, lng: -114.9817 },
+    { name: 'Greensboro', state: 'NC', lat: 36.0726, lng: -79.7920 },
+    { name: 'Plano', state: 'TX', lat: 33.0198, lng: -96.6989 },
+    { name: 'Newark', state: 'NJ', lat: 40.7357, lng: -74.1724 },
+    { name: 'Lincoln', state: 'NE', lat: 40.8136, lng: -96.7026 },
+    { name: 'Toledo', state: 'OH', lat: 41.6528, lng: -83.5379 },
+    { name: 'Orlando', state: 'FL', lat: 28.5383, lng: -81.3792 },
+    { name: 'Chula Vista', state: 'CA', lat: 32.6401, lng: -117.0842 },
+    { name: 'Jersey City', state: 'NJ', lat: 40.7178, lng: -74.0431 },
+    { name: 'Chandler', state: 'AZ', lat: 33.3062, lng: -111.8413 },
+    { name: 'Laredo', state: 'TX', lat: 27.5306, lng: -99.4803 },
+    { name: 'Madison', state: 'WI', lat: 43.0731, lng: -89.4012 },
+    { name: 'Lubbock', state: 'TX', lat: 33.5779, lng: -101.8552 },
+    { name: 'Winston-Salem', state: 'NC', lat: 36.0999, lng: -80.2442 },
+    { name: 'Garland', state: 'TX', lat: 32.9126, lng: -96.6389 },
+    { name: 'Glendale', state: 'AZ', lat: 33.5387, lng: -112.1860 },
+    { name: 'Hialeah', state: 'FL', lat: 25.8576, lng: -80.2781 },
+    { name: 'Reno', state: 'NV', lat: 39.5296, lng: -119.8138 },
+    { name: 'Baton Rouge', state: 'LA', lat: 30.4515, lng: -91.1871 },
+    { name: 'Irvine', state: 'CA', lat: 33.6846, lng: -117.8265 },
+    { name: 'Chesapeake', state: 'VA', lat: 36.7682, lng: -76.2875 },
+    { name: 'Irving', state: 'TX', lat: 32.8140, lng: -96.9489 },
+    { name: 'Scottsdale', state: 'AZ', lat: 33.4942, lng: -111.9261 },
+    { name: 'North Las Vegas', state: 'NV', lat: 36.1989, lng: -115.1175 },
+    { name: 'Fremont', state: 'CA', lat: 37.5485, lng: -121.9886 },
+    { name: 'Gilbert', state: 'AZ', lat: 33.3528, lng: -111.7890 },
+    { name: 'San Bernardino', state: 'CA', lat: 34.1083, lng: -117.2898 },
+    { name: 'Boise', state: 'ID', lat: 43.6150, lng: -116.2023 },
+    { name: 'Birmingham', state: 'AL', lat: 33.5207, lng: -86.8025 }
 ];
 
-// Function to search cities
+// Enhanced search function with better filtering
 const searchCities = (query) => {
-    if (!query || query.length < 2) return [];
-    const lowercaseQuery = query.toLowerCase();
-    return US_CITIES.filter(city => 
-        city.name.toLowerCase().includes(lowercaseQuery) || 
-        city.state.toLowerCase().includes(lowercaseQuery) ||
-        `${city.name}, ${city.state}`.toLowerCase().includes(lowercaseQuery)
-    ).slice(0, 10);
+    if (!query || query.length < 1) return [];
+    
+    const lowercaseQuery = query.toLowerCase().trim();
+    
+    // Score-based ranking for better results
+    const cityMatches = US_CITIES.map(city => {
+        const cityName = city.name.toLowerCase();
+        const stateName = city.state.toLowerCase();
+        const fullName = `${city.name}, ${city.state}`.toLowerCase();
+        
+        let score = 0;
+        
+        // Exact matches get highest priority
+        if (cityName === lowercaseQuery) score += 100;
+        if (fullName === lowercaseQuery) score += 95;
+        
+        // Starts with query gets high priority  
+        if (cityName.startsWith(lowercaseQuery)) score += 50;
+        if (stateName.startsWith(lowercaseQuery)) score += 30;
+        
+        // Contains query gets medium priority
+        if (cityName.includes(lowercaseQuery)) score += 20;
+        if (stateName.includes(lowercaseQuery)) score += 10;
+        if (fullName.includes(lowercaseQuery)) score += 15;
+        
+        return { ...city, score };
+    })
+    .filter(city => city.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 15); // Show more results for better UX
+    
+    return cityMatches;
+};
+
+// Fallback geocoding using Nominatim API (free, no API key required)
+const geocodeWithAPI = async (query) => {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&limit=5&q=${encodeURIComponent(query)}`
+        );
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            return data.map(item => ({
+                name: item.display_name.split(',')[0],
+                state: item.display_name.split(',')[1]?.trim() || 'Unknown',
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon)
+            }));
+        }
+    } catch (error) {
+        console.error('Geocoding API error:', error);
+    }
+    return [];
 };
 
 // Utility functions for IndexedDB
@@ -479,7 +828,7 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
     // Handle city input change with autocomplete
     const handleCityInputChange = (value) => {
         setCityInput(value);
-        if (value.length >= 2) {
+        if (value.length >= 1) {
             const results = searchCities(value);
             setSearchResults(results);
             setShowSuggestions(results.length > 0);
@@ -502,14 +851,16 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
         onClose();
     };
 
-    // Handle manual city input submission
-    const handleCitySubmit = () => {
+    // Handle manual city input submission with API fallback
+    const handleCitySubmit = async () => {
         if (!cityInput.trim()) {
             alert('Please enter a city name');
             return;
         }
 
-        // Try to find exact match in search results
+        setIsLoading(true);
+
+        // First try to find exact match in our database
         const exactMatch = US_CITIES.find(city => 
             `${city.name}, ${city.state}`.toLowerCase() === cityInput.toLowerCase() ||
             city.name.toLowerCase() === cityInput.toLowerCase()
@@ -522,9 +873,44 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                 name: `${exactMatch.name}, ${exactMatch.state}`
             });
             onClose();
-        } else {
-            alert('City not found. Please select from autocomplete suggestions or choose a fishing location.');
+            setIsLoading(false);
+            return;
         }
+
+        // If no exact match, try fuzzy search in our database
+        const fuzzyResults = searchCities(cityInput);
+        if (fuzzyResults.length > 0 && fuzzyResults[0].score > 50) {
+            const bestMatch = fuzzyResults[0];
+            onLocationSet({
+                lat: bestMatch.lat,
+                lng: bestMatch.lng,
+                name: `${bestMatch.name}, ${bestMatch.state}`
+            });
+            onClose();
+            setIsLoading(false);
+            return;
+        }
+
+        // Finally, try external geocoding API
+        try {
+            const apiResults = await geocodeWithAPI(cityInput);
+            if (apiResults.length > 0) {
+                const result = apiResults[0];
+                onLocationSet({
+                    lat: result.lat,
+                    lng: result.lng,
+                    name: `${result.name}, ${result.state}`
+                });
+                onClose();
+                setIsLoading(false);
+                return;
+            }
+        } catch (error) {
+            console.error('API geocoding failed:', error);
+        }
+
+        setIsLoading(false);
+        alert('City not found. Please check spelling or select from autocomplete suggestions.');
     };
 
     const stripedBassLocations = [
@@ -594,16 +980,16 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                                 onChange={(e) => handleCityInputChange(e.target.value)}
                                 placeholder="Boston, MA"
                                 className="flex-1 h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
-                                onFocus={() => cityInput.length >= 2 && setShowSuggestions(searchResults.length > 0)}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                                            onFocus={() => cityInput.length >= 1 && setShowSuggestions(searchResults.length > 0)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleCitySubmit()}
                             />
                             <button 
                                 onClick={handleCitySubmit}
-                                disabled={!cityInput.trim()}
+                                disabled={!cityInput.trim() || isLoading}
                                 className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
                             >
-                                Set
+                                {isLoading ? '...' : 'Set'}
                             </button>
                         </div>
                         
