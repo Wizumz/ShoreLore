@@ -550,6 +550,90 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c;
 };
 
+// Rate limiting configuration
+const RATE_LIMITS = {
+    POST_COOLDOWN: 30000, // 30 seconds between posts
+    VOTE_COOLDOWN: 1000,  // 1 second between votes
+    MAX_POSTS_PER_HOUR: 10,
+    MAX_VOTES_PER_MINUTE: 30
+};
+
+// Rate limiting check
+const checkRateLimit = (lastTime, cooldown, count, maxCount, timeWindow) => {
+    const now = Date.now();
+    const timeSinceLastAction = now - lastTime;
+    
+    if (timeSinceLastAction < cooldown) {
+        return { allowed: false, remainingTime: Math.ceil((cooldown - timeSinceLastAction) / 1000) };
+    }
+    
+    // Check count-based limits (simplified - in real app would track per time window)
+    if (count >= maxCount) {
+        return { allowed: false, remainingTime: Math.ceil(timeWindow / 1000) };
+    }
+    
+    return { allowed: true, remainingTime: 0 };
+};
+
+// Auto-moderation - spam and inappropriate content filter
+const BLOCKED_WORDS = [
+    'spam', 'scam', 'fake', 'bot', 'hack', 'cheat', 'exploit',
+    'idiot', 'stupid', 'hate', 'kill', 'die', 'suicide',
+    'buy now', 'click here', 'make money', 'get rich', 'free money'
+];
+
+const SUSPICIOUS_PATTERNS = [
+    /(.)\1{4,}/g, // Repeated characters (aaaaa)
+    /[A-Z]{10,}/g, // Excessive caps
+    /https?:\/\/[^\s]+/g, // URLs (could be spam)
+    /\d{10,}/g, // Long numbers (phone numbers)
+    /[!@#$%^&*]{3,}/g // Excessive special characters
+];
+
+const moderateContent = (content) => {
+    const lowerContent = content.toLowerCase();
+    const issues = [];
+    
+    // Check for blocked words
+    const foundBlockedWords = BLOCKED_WORDS.filter(word => lowerContent.includes(word));
+    if (foundBlockedWords.length > 0) {
+        issues.push(`Contains inappropriate words: ${foundBlockedWords.join(', ')}`);
+    }
+    
+    // Check for suspicious patterns
+    SUSPICIOUS_PATTERNS.forEach(pattern => {
+        if (pattern.test(content)) {
+            issues.push('Contains suspicious patterns');
+        }
+    });
+    
+    // Check length
+    if (content.length < 3) {
+        issues.push('Content too short');
+    }
+    
+    // Check for excessive repetition
+    const words = content.split(/\s+/);
+    const wordCounts = {};
+    words.forEach(word => {
+        const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
+        if (cleanWord.length > 2) {
+            wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
+        }
+    });
+    
+    const maxRepeats = Math.max(...Object.values(wordCounts));
+    if (maxRepeats > 3) {
+        issues.push('Excessive word repetition detected');
+    }
+    
+    return {
+        allowed: issues.length === 0,
+        issues: issues,
+        severity: issues.length > 2 ? 'high' : issues.length > 0 ? 'medium' : 'low'
+    };
+};
+
 
 
 
@@ -1050,7 +1134,7 @@ const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPo
 
 
 // Post Component with terminal styling
-const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
+const Post = ({ post, onVote, onComment, onReport, userVotes, comments, isPinned = false, showLocation = false }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [isReported, setIsReported] = useState(false);
@@ -1105,7 +1189,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                             </div>
                         </div>
                         <div className="text-xs terminal-accent">
-                            {getTimeAgo(post.timestamp)} • {post.location.distance}mi away
+                            {getTimeAgo(post.timestamp)}
+                            {showLocation && post.location.name ? (
+                                <> • 📍 {post.location.name}</>
+                            ) : (
+                                <> • {post.location.distance}mi away</>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1221,7 +1310,7 @@ const App = () => {
     const [db, setDb] = useState(null);
     const [showUsernameSetup, setShowUsernameSetup] = useState(false);
 
-    const [sortBy, setSortBy] = useState('hot'); // 'hot' or 'new'
+    const [sortBy, setSortBy] = useState('hot'); // 'hot', 'new', or 'coastwide'
     const [currentLocationName, setCurrentLocationName] = useState('');
     const [showPostModal, setShowPostModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -1230,6 +1319,21 @@ const App = () => {
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [locationRadius, setLocationRadius] = useState(10);
     const [userStats, setUserStats] = useState({ posts: [], comments: [] });
+    
+    // Real-time updates
+    const [lastUpdateCheck, setLastUpdateCheck] = useState(Date.now());
+    const eventSourceRef = useRef(null);
+    
+    // Rate limiting
+    const [lastPostTime, setLastPostTime] = useState(0);
+    const [lastVoteTime, setLastVoteTime] = useState(0);
+    const [postCount, setPostCount] = useState(0);
+    const [voteCount, setVoteCount] = useState(0);
+    
+    // Pinned posts and lazy loading
+    const [pinnedPosts, setPinnedPosts] = useState([]);
+    const [loadedPostsCount, setLoadedPostsCount] = useState(20); // Start with 20 posts
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     
     const textareaRef = useRef(null);
     
@@ -1261,39 +1365,68 @@ const App = () => {
                 const database = await initDB();
                 setDb(database);
                 await loadData(database, user.id);
+                
+                // Initialize pinned posts (mock data for now)
+                const mockPinnedPosts = [
+                    {
+                        id: 'pinned-1',
+                        content: '🚨 FISHING ALERT: Large school of stripers reported off Montauk Point! Best bite early morning with live eels.',
+                        author: 'FISHING_ADMIN',
+                        authorId: 'admin-1',
+                        authorColor: { name: 'Red', value: '#dc2626', textClass: 'text-red-600' },
+                        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+                        upvotes: 45,
+                        downvotes: 2,
+                        score: 43,
+                        location: { lat: 41.0486, lng: -71.8535, distance: 0, name: 'Montauk Point, NY' },
+                        isPinned: true,
+                        pinReason: 'Community Alert'
+                    }
+                ];
+                setPinnedPosts(mockPinnedPosts);
+                
             } catch (error) {
                 console.error('Failed to initialize database:', error);
             }
             
-            // Get user location with enhanced GPS functionality
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        setUserLocation({ lat, lng });
-                        setCurrentLocationName(getApproximateLocation(lat, lng));
-                        console.log('GPS location acquired:', { lat, lng });
-                    },
-                    (error) => {
-                        console.error('GPS location failed:', error.message);
-                        // Fallback to a default location (Cape Cod) if GPS fails
-                        const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
-                        setUserLocation(fallbackLocation);
-                        setCurrentLocationName(`${fallbackLocation.name} (Default)`);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 300000 // 5 minutes cache
-                    }
-                );
+            // Get user location - only use GPS if no saved custom location
+            const savedSettings = loadLocationSettings();
+            if (savedSettings.customLocation) {
+                // Use saved custom location
+                setUserLocation(savedSettings.customLocation);
+                setCurrentLocationName(savedSettings.customLocation.name);
+                console.log('Using saved custom location:', savedSettings.customLocation);
             } else {
-                console.warn('Geolocation not supported');
-                // Fallback to a default location
-                const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
-                setUserLocation(fallbackLocation);
-                setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                // No saved location, try GPS
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            setUserLocation({ lat, lng });
+                            setCurrentLocationName(getApproximateLocation(lat, lng));
+                            console.log('GPS location acquired:', { lat, lng });
+                        },
+                        (error) => {
+                            console.error('GPS location failed:', error.message);
+                            // Fallback to a default location (Cape Cod) if GPS fails
+                            const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
+                            setUserLocation(fallbackLocation);
+                            setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 300000 // 5 minutes cache
+                        }
+                    );
+                } else {
+                    console.warn('Geolocation not supported');
+                    // Fallback to a default location
+                    const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
+                    setUserLocation(fallbackLocation);
+                    setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                }
             }
         };
         
@@ -1325,6 +1458,33 @@ const App = () => {
             saveLocationSettings(customLocation, locationRadius);
         }
     }, [locationRadius, customLocation]);
+    
+    // Infinite scroll for lazy loading
+    useEffect(() => {
+        const handleScroll = () => {
+            if (sortBy === 'coastwide') return; // No infinite scroll for coastwide
+            
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = window.innerHeight;
+            
+            if (scrollTop + clientHeight >= scrollHeight - 1000 && !isLoadingMore) {
+                setIsLoadingMore(true);
+                setTimeout(() => {
+                    setLoadedPostsCount(prev => prev + 10);
+                    setIsLoadingMore(false);
+                }, 500); // Simulate loading delay
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [sortBy, isLoadingMore]);
+    
+    // Reset loaded posts count when sort changes
+    useEffect(() => {
+        setLoadedPostsCount(20);
+    }, [sortBy]);
     
     // Handle username setup
     const handleUsernameSet = (username, color) => {
@@ -1417,7 +1577,42 @@ const App = () => {
     
     // Filter and sort posts by location and criteria
     const getFilteredPosts = () => {
-        if (!userLocation) return posts;
+        if (sortBy === 'coastwide') {
+            // Coastwide: Return top 3 posts from across the East Coast with location info
+            const allPostsWithDistance = posts.map(post => ({
+                ...post,
+                location: {
+                    ...post.location,
+                    distance: userLocation ? Math.round(calculateDistance(
+                        userLocation.lat, userLocation.lng, 
+                        post.location.lat, post.location.lng
+                    ) * 10) / 10 : 0
+                }
+            }));
+            
+            // Sort by hot score and take top 3
+            const topPosts = allPostsWithDistance
+                .filter(post => {
+                    // Only include East Coast posts (rough longitude filter)
+                    return post.location.lng > -82 && post.location.lng < -66;
+                })
+                .sort((a, b) => {
+                    const aComments = comments.filter(c => c.postId === a.id).length;
+                    const bComments = comments.filter(c => c.postId === b.id).length;
+                    const aAge = (Date.now() - new Date(a.timestamp)) / (1000 * 60 * 60);
+                    const bAge = (Date.now() - new Date(b.timestamp)) / (1000 * 60 * 60);
+                    
+                    const aHotScore = a.score + aComments * 3 - aAge * 0.05; // Slightly different weights for coastwide
+                    const bHotScore = b.score + bComments * 3 - bAge * 0.05;
+                    
+                    return bHotScore - aHotScore;
+                })
+                .slice(0, 3);
+            
+            return topPosts;
+        }
+        
+        if (!userLocation) return posts.slice(0, loadedPostsCount);
         
         // Use custom location if set, otherwise use GPS location
         const effectiveLocation = customLocation || userLocation;
@@ -1461,19 +1656,40 @@ const App = () => {
             filteredPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
         
-        return filteredPosts;
+        // Apply lazy loading limit
+        return filteredPosts.slice(0, loadedPostsCount);
     };
     
     // Create new post
     const handleCreatePost = async () => {
         if (!newPostContent.trim() || !db || !user || !userLocation) return;
         
+        // Rate limiting check
+        const rateLimitCheck = checkRateLimit(
+            lastPostTime, 
+            RATE_LIMITS.POST_COOLDOWN, 
+            postCount, 
+            RATE_LIMITS.MAX_POSTS_PER_HOUR,
+            3600000 // 1 hour
+        );
+        
+        if (!rateLimitCheck.allowed) {
+            alert(`Please wait ${rateLimitCheck.remainingTime} seconds before posting again.`);
+            return;
+        }
+        
+        // Content moderation check
+        const moderationResult = moderateContent(newPostContent.trim());
+        if (!moderationResult.allowed) {
+            alert(`Post blocked: ${moderationResult.issues.join(', ')}`);
+            return;
+        }
+        
         const newPost = {
             content: newPostContent.trim(),
             author: user.screenName,
             authorId: user.id,
             authorColor: user.color,
-
             timestamp: new Date().toISOString(),
             upvotes: 0,
             downvotes: 0,
@@ -1496,6 +1712,10 @@ const App = () => {
             
             await loadData(db, user.id);
             setNewPostContent('');
+            
+            // Update rate limiting counters
+            setLastPostTime(Date.now());
+            setPostCount(prev => prev + 1);
         } catch (error) {
             console.error('Failed to create post:', error);
         }
@@ -1504,6 +1724,20 @@ const App = () => {
     // Handle voting
     const handleVote = async (postId, voteType) => {
         if (!db || !user) return;
+        
+        // Rate limiting check
+        const rateLimitCheck = checkRateLimit(
+            lastVoteTime, 
+            RATE_LIMITS.VOTE_COOLDOWN, 
+            voteCount, 
+            RATE_LIMITS.MAX_VOTES_PER_MINUTE,
+            60000 // 1 minute
+        );
+        
+        if (!rateLimitCheck.allowed) {
+            console.log(`Vote rate limited: ${rateLimitCheck.remainingTime}s remaining`);
+            return;
+        }
         
         try {
             const transaction = db.transaction(['posts', 'votes'], 'readwrite');
@@ -1590,6 +1824,10 @@ const App = () => {
             });
             
             await loadData(db, user.id);
+            
+            // Update rate limiting counters
+            setLastVoteTime(Date.now());
+            setVoteCount(prev => prev + 1);
         } catch (error) {
             console.error('Failed to vote:', error);
         }
@@ -1743,10 +1981,10 @@ const App = () => {
                     {/* Sort Categories */}
                     <div className="terminal-card p-3">
                         <div className="text-sm font-bold terminal-text mb-2">Sort by:</div>
-                        <div className="flex space-x-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => setSortBy('hot')}
-                                className={`px-4 py-2 text-sm font-bold border-2 ${
+                                className={`px-3 py-2 text-sm font-bold border-2 ${
                                     sortBy === 'hot' 
                                         ? 'terminal-button' 
                                         : 'border-navy-600 bg-white text-navy-600 hover:bg-navy-50'
@@ -1756,7 +1994,7 @@ const App = () => {
                             </button>
                             <button
                                 onClick={() => setSortBy('new')}
-                                className={`px-4 py-2 text-sm font-bold border-2 ${
+                                className={`px-3 py-2 text-sm font-bold border-2 ${
                                     sortBy === 'new' 
                                         ? 'terminal-button' 
                                         : 'border-navy-600 bg-white text-navy-600 hover:bg-navy-50'
@@ -1764,7 +2002,22 @@ const App = () => {
                             >
                                 ⭐ New
                             </button>
+                            <button
+                                onClick={() => setSortBy('coastwide')}
+                                className={`px-3 py-2 text-sm font-bold border-2 ${
+                                    sortBy === 'coastwide' 
+                                        ? 'terminal-button' 
+                                        : 'border-navy-600 bg-white text-navy-600 hover:bg-navy-50'
+                                } focus:outline-none focus:ring-2 focus:ring-navy-600`}
+                            >
+                                🌊 Coastwide
+                            </button>
                         </div>
+                        {sortBy === 'coastwide' && (
+                            <div className="text-xs terminal-accent mt-2">
+                                Top 3 posts from across the East Coast
+                            </div>
+                        )}
                     </div>
                 </div>
                 
@@ -1772,28 +2025,80 @@ const App = () => {
                 
                 {/* Posts Feed */}
                 <div className="p-4">
+                    {/* Pinned Posts - show only for hot and new, not coastwide */}
+                    {sortBy !== 'coastwide' && pinnedPosts.length > 0 && (
+                        <div className="mb-4">
+                            <div className="text-sm font-bold terminal-text mb-2 flex items-center">
+                                📌 Pinned Posts
+                            </div>
+                            {pinnedPosts.map(post => (
+                                <div key={post.id} className="mb-3">
+                                    <div className="bg-yellow-50 border-2 border-yellow-400 p-2 rounded">
+                                        <div className="text-xs text-yellow-700 font-bold mb-1">
+                                            📌 {post.pinReason}
+                                        </div>
+                                        <Post
+                                            post={post}
+                                            onVote={handleVote}
+                                            onComment={handleComment}
+                                            onReport={handleReport}
+                                            userVotes={userVotes}
+                                            comments={comments}
+                                            isPinned={true}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    
                     {filteredPosts.length === 0 ? (
                         <div className="p-8 text-center">
                             <div className="text-4xl mb-4">🎣</div>
                             <div className="text-sm font-bold terminal-text mb-2">
-                                No posts in your area
+                                {sortBy === 'coastwide' ? 'No trending posts found' : 'No posts in your area'}
                             </div>
                             <div className="text-xs terminal-accent">
-                                Be the first to share what's happening on the water!
+                                {sortBy === 'coastwide' 
+                                    ? 'Check back later for trending discussions!' 
+                                    : 'Be the first to share what\'s happening on the water!'
+                                }
                             </div>
                         </div>
                     ) : (
-                        filteredPosts.map(post => (
-                            <Post
-                                key={post.id}
-                                post={post}
-                                onVote={handleVote}
-                                onComment={handleComment}
-                                onReport={handleReport}
-                                userVotes={userVotes}
-                                comments={comments}
-                            />
-                        ))
+                        <>
+                            {/* Regular Posts */}
+                            {filteredPosts.map((post, index) => (
+                                <div key={post.id}>
+                                    <Post
+                                        post={post}
+                                        onVote={handleVote}
+                                        onComment={handleComment}
+                                        onReport={handleReport}
+                                        userVotes={userVotes}
+                                        comments={comments}
+                                        showLocation={sortBy === 'coastwide'}
+                                    />
+                                    {sortBy === 'coastwide' && index < filteredPosts.length - 1 && (
+                                        <div className="border-t-2 border-navy-300 my-4"></div>
+                                    )}
+                                </div>
+                            ))}
+                            
+                            {/* Loading indicator for infinite scroll */}
+                            {isLoadingMore && sortBy !== 'coastwide' && (
+                                <div className="text-center py-4">
+                                    <div className="text-sm terminal-accent">Loading more posts...</div>
+                                </div>
+                            )}
+                            
+                            {/* End of posts indicator */}
+                            {!isLoadingMore && sortBy !== 'coastwide' && filteredPosts.length >= loadedPostsCount && (
+                                <div className="text-center py-4">
+                                    <div className="text-xs terminal-accent">Scroll down for more posts</div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
                 
