@@ -93,7 +93,7 @@ This project is optimized for Netlify deployment:
 3. **Create First Cast**: Share what's happening on the water!
 
 ### Creating Posts ("Casts")
-- Click the text area: "What's biting today?"
+- Click the text area: "Post your weather and/or fishing reports..."
 - Write up to 200 characters
 - Click "Cast" to share with nearby fishermen
 - Posts are anonymous but tied to your screen name
