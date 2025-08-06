@@ -816,7 +816,7 @@ const AccountModal = ({ isOpen, onClose, user, userStats }) => {
 };
 
 // Location Selection Modal Component
-const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation, currentRadius, onRadiusChange }) => {
+const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation }) => {
     const [cityInput, setCityInput] = useState('');
     const [selectedPreset, setSelectedPreset] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -946,26 +946,6 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                 </div>
                 
                 <div className="space-y-4">
-                    {/* Radius Selection */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold terminal-text block">
-                            Search Radius: {currentRadius} miles
-                        </label>
-                        <input
-                            type="range"
-                            min="5"
-                            max="100"
-                            step="5"
-                            value={currentRadius}
-                            onChange={(e) => onRadiusChange(parseInt(e.target.value))}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="flex justify-between text-xs terminal-accent">
-                            <span>5 mi</span>
-                            <span>100 mi</span>
-                        </div>
-                    </div>
-
                     <div className="text-center text-xs terminal-accent">Select a location:</div>
 
                     {/* City/State Input with Autocomplete */}
@@ -1691,8 +1671,6 @@ const App = () => {
                 onClose={() => setShowLocationModal(false)}
                 onLocationSet={handleLocationSet}
                 currentLocation={userLocation}
-                currentRadius={locationRadius}
-                onRadiusChange={setLocationRadius}
             />
 
             {/* Post Creation Modal */}
@@ -1752,19 +1730,44 @@ const App = () => {
                 
                 {/* Location Info & Sort Categories */}
                 <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-                    {/* Location Display */}
-                    <button 
-                        onClick={() => setShowLocationModal(true)}
-                        className="p-3 w-full text-left hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-300 rounded"
-                    >
-                        <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
-                        <div className="text-xs terminal-accent">
-                            {currentLocationName} • {locationRadius} mile radius
+                    {/* Location Display with Radius Slider */}
+                    <div className="p-3 terminal-card">
+                        <div className="space-y-3">
+                            <button 
+                                onClick={() => setShowLocationModal(true)}
+                                className="w-full text-left hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-300 rounded p-2"
+                            >
+                                <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
+                                <div className="text-xs terminal-accent">
+                                    {currentLocationName}
+                                </div>
+                                <div className="text-xs text-navy-600 mt-1">
+                                    Click to change location
+                                </div>
+                            </button>
+                            
+                            {/* Radius Slider */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold terminal-text block">
+                                    Search Radius: {locationRadius} miles
+                                </label>
+                                <input
+                                    type="range"
+                                    min="5"
+                                    max="100"
+                                    step="5"
+                                    value={locationRadius}
+                                    onChange={(e) => setLocationRadius(parseInt(e.target.value))}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-navy"
+                                />
+                                <div className="flex justify-between text-xs terminal-accent">
+                                    <span>5 mi</span>
+                                    <span>Show posts within {locationRadius} miles</span>
+                                    <span>100 mi</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="text-xs text-navy-600 mt-1">
-                            Click to change location
-                        </div>
-                    </button>
+                    </div>
                     
                     {/* Sort Categories */}
                     <div className="terminal-card p-3">
