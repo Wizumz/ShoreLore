@@ -99,6 +99,25 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c;
 };
 
+// Convert zip code to approximate coordinates (basic US zip codes)
+const getCoordinatesFromZip = async (zipCode) => {
+    // This is a simple lookup for common US zip codes - in production you'd use a proper API
+    const zipToCoords = {
+        '10001': { lat: 40.7506, lng: -73.9972, name: 'New York, NY' },
+        '90210': { lat: 34.0901, lng: -118.4065, name: 'Beverly Hills, CA' },
+        '60601': { lat: 41.8825, lng: -87.6441, name: 'Chicago, IL' },
+        '33101': { lat: 25.7743, lng: -80.1937, name: 'Miami, FL' },
+        '78701': { lat: 30.2711, lng: -97.7436, name: 'Austin, TX' },
+        '02101': { lat: 42.3583, lng: -71.0603, name: 'Boston, MA' },
+        '98101': { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
+        '30301': { lat: 33.7490, lng: -84.3880, name: 'Atlanta, GA' },
+        '80201': { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' },
+        '19101': { lat: 39.9526, lng: -75.1652, name: 'Philadelphia, PA' }
+    };
+    
+    return zipToCoords[zipCode] || null;
+};
+
 // Mock locations for testing
 const mockLocations = {
     seattle: { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
@@ -220,6 +239,117 @@ const UsernameSetup = ({ onUsernameSet }) => {
     );
 };
 
+// Location Selection Modal Component
+const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation }) => {
+    const [zipCode, setZipCode] = useState('');
+    const [selectedPreset, setSelectedPreset] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const presetLocations = [
+        { id: 'current', name: 'Use Current Location', coords: null },
+        { id: 'seattle', name: 'Seattle, WA', coords: mockLocations.seattle },
+        { id: 'miami', name: 'Miami, FL', coords: mockLocations.miami },
+        { id: 'chicago', name: 'Chicago, IL', coords: mockLocations.chicago },
+        { id: 'denver', name: 'Denver, CO', coords: mockLocations.denver }
+    ];
+
+    const handleZipCodeSubmit = async () => {
+        if (!zipCode.trim()) return;
+        
+        setIsLoading(true);
+        const coords = await getCoordinatesFromZip(zipCode.trim());
+        setIsLoading(false);
+        
+        if (coords) {
+            onLocationSet(coords);
+            onClose();
+        } else {
+            alert('Zip code not found. Please try a different zip code or select a preset location.');
+        }
+    };
+
+    const handlePresetSelect = (location) => {
+        if (location.id === 'current') {
+            onLocationSet(null); // null means use current GPS location
+        } else {
+            onLocationSet(location.coords);
+        }
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-md terminal-card p-6">
+                <div className="text-center mb-4">
+                    <div className="text-lg font-bold terminal-text">
+                        Set Location
+                    </div>
+                    <div className="text-xs terminal-accent mt-1">
+                        Choose where to view fishing posts
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    {/* Zip Code Input */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold terminal-text block">
+                            Enter Zip Code:
+                        </label>
+                        <div className="flex space-x-2">
+                            <input
+                                type="text"
+                                value={zipCode}
+                                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                                placeholder="12345"
+                                className="flex-1 h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
+                                maxLength={5}
+                            />
+                            <button 
+                                onClick={handleZipCodeSubmit}
+                                disabled={zipCode.length !== 5 || isLoading}
+                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
+                            >
+                                {isLoading ? '...' : 'Go'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="text-center text-xs terminal-accent">or</div>
+
+                    {/* Preset Locations */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold terminal-text block">
+                            Quick Select:
+                        </label>
+                        <div className="space-y-1">
+                            {presetLocations.map((location) => (
+                                <button
+                                    key={location.id}
+                                    onClick={() => handlePresetSelect(location)}
+                                    className="w-full text-left px-3 py-2 text-sm hover:bg-navy-50 border border-gray-300 hover:border-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                                >
+                                    {location.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <button 
+                            onClick={onClose}
+                            className="w-full h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Post Creation Modal Component
 const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPostContent, isOnline }) => {
     if (!isOpen) return null;
@@ -234,11 +364,6 @@ const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPo
     return (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="w-full max-w-md terminal-card p-6">
-                <div className="text-center mb-4">
-                    <div className="text-lg font-bold terminal-text">
-                        Share your catch
-                    </div>
-                </div>
                 
                 <div className="space-y-4">
                     <div className="space-y-2">
@@ -543,6 +668,9 @@ const App = () => {
     const [sortBy, setSortBy] = useState('hot'); // 'hot' or 'new'
     const [currentLocationName, setCurrentLocationName] = useState('');
     const [showPostModal, setShowPostModal] = useState(false);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [zipCodeInput, setZipCodeInput] = useState('');
+    const [customLocation, setCustomLocation] = useState(null);
     
     const textareaRef = useRef(null);
     
@@ -615,6 +743,36 @@ const App = () => {
         setShowUsernameSetup(false);
     };
     
+    // Handle location change
+    const handleLocationSet = async (newLocation) => {
+        if (!newLocation) {
+            // Use current GPS location
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const coords = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        setUserLocation(coords);
+                        setCustomLocation(null);
+                        const locationName = getApproximateLocation(coords.lat, coords.lng);
+                        setCurrentLocationName(locationName);
+                    },
+                    () => {
+                        console.error('Failed to get current location');
+                        setCustomLocation(null);
+                    }
+                );
+            }
+        } else {
+            // Use custom location
+            setUserLocation(newLocation);
+            setCustomLocation(newLocation);
+            setCurrentLocationName(newLocation.name);
+        }
+    };
+
     // Handle username change
     const handleUsernameChange = async (newUsername, newColor) => {
         const oldScreenName = user.screenName;
@@ -708,13 +866,16 @@ const App = () => {
     const getFilteredPosts = () => {
         if (!userLocation) return posts;
         
+        // Use custom location if set, otherwise use GPS location
+        const effectiveLocation = customLocation || userLocation;
+        
         let filteredPosts = posts.filter(post => {
             if (post.location.lat && post.location.lng) {
                 const distance = calculateDistance(
-                    userLocation.lat, userLocation.lng,
+                    effectiveLocation.lat, effectiveLocation.lng,
                     post.location.lat, post.location.lng
                 );
-                return distance <= 15;
+                return distance <= 10;
             }
             return true;
         });
@@ -724,7 +885,7 @@ const App = () => {
             ...post,
             location: {
                 ...post.location,
-                distance: Math.round(calculateDistance(userLocation?.lat || 0, userLocation?.lng || 0, post.location.lat, post.location.lng) * 10) / 10
+                distance: Math.round(calculateDistance(effectiveLocation?.lat || 0, effectiveLocation?.lng || 0, post.location.lat, post.location.lng) * 10) / 10
             }
         }));
         
@@ -923,6 +1084,14 @@ const App = () => {
     
     return (
         <div className="min-h-screen bg-gray-50 terminal-text">
+            {/* Location Selection Modal */}
+            <LocationSelectionModal
+                isOpen={showLocationModal}
+                onClose={() => setShowLocationModal(false)}
+                onLocationSet={handleLocationSet}
+                currentLocation={userLocation}
+            />
+
             {/* Post Creation Modal */}
             <PostCreationModal
                 isOpen={showPostModal}
@@ -978,12 +1147,18 @@ const App = () => {
                 {/* Location Info & Sort Categories */}
                 <div className="p-4 space-y-4">
                     {/* Location Display */}
-                    <div className="p-3">
+                    <button 
+                        onClick={() => setShowLocationModal(true)}
+                        className="p-3 w-full text-left hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                    >
                         <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
                         <div className="text-xs terminal-accent">
-                            {currentLocationName} • 15 mile radius
+                            {currentLocationName} • 10 mile radius
                         </div>
-                    </div>
+                        <div className="text-xs text-navy-600 mt-1">
+                            Click to change location
+                        </div>
+                    </button>
                     
                     {/* Sort Categories */}
                     <div className="terminal-card p-3">
