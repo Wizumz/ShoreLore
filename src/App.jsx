@@ -306,7 +306,7 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
     }
     
     return (
-        <div className="mb-4 terminal-card p-4">
+        <div className="py-4 border-b border-gray-300 last:border-b-0">
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center space-x-3">
                                     <div className="w-8 h-8 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
@@ -786,17 +786,12 @@ const App = () => {
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <div className="text-right">
-                                <button 
-                                    onClick={() => setShowUsernameChange(true)}
-                                    className="text-sm font-bold hover:bg-navy-800 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-navy-300"
-                                >
-                                    {user?.screenName}
-                                </button>
-                                <div className="text-xs">
-                                    {isOnline ? '🟢 Online' : '🔴 Offline'}
-                                </div>
-                            </div>
+                            <button 
+                                onClick={() => setShowUsernameChange(true)}
+                                className="text-sm font-bold hover:bg-navy-800 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                            >
+                                {user?.screenName}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -804,7 +799,7 @@ const App = () => {
                 {/* Location Info & Sort Categories */}
                 <div className="p-4 space-y-4">
                     {/* Location Display */}
-                    <div className="terminal-card p-3">
+                    <div className="p-3">
                         <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
                         <div className="text-xs terminal-accent">
                             {currentLocationName} • 15 mile radius
@@ -860,7 +855,7 @@ const App = () => {
                                 disabled={!newPostContent.trim() || !isOnline}
                                 className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
                             >
-                                🎣 Cast
+                                Post
                             </button>
                         </div>
                     </div>
@@ -869,10 +864,10 @@ const App = () => {
                 {/* Posts Feed */}
                 <div className="p-4">
                     {filteredPosts.length === 0 ? (
-                        <div className="terminal-card p-8 text-center">
+                        <div className="p-8 text-center">
                             <div className="text-4xl mb-4">🎣</div>
                             <div className="text-sm font-bold terminal-text mb-2">
-                                No casts in your area
+                                No posts in your area
                             </div>
                             <div className="text-xs terminal-accent">
                                 Be the first to share what's happening on the water!
