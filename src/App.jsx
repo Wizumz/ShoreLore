@@ -50,18 +50,38 @@ const generateScreenName = () => {
     return `${adj}${noun}${numbers}`;
 };
 
+// Available colors for usernames (accessibility compliant)
+const USERNAME_COLORS = [
+    { name: 'Navy', value: '#1e3a8a', textClass: 'text-blue-800' },
+    { name: 'Purple', value: '#7c3aed', textClass: 'text-purple-600' },
+    { name: 'Green', value: '#059669', textClass: 'text-emerald-600' },
+    { name: 'Orange', value: '#ea580c', textClass: 'text-orange-600' },
+    { name: 'Red', value: '#dc2626', textClass: 'text-red-600' },
+    { name: 'Teal', value: '#0d9488', textClass: 'text-teal-600' },
+    { name: 'Pink', value: '#db2777', textClass: 'text-pink-600' },
+    { name: 'Indigo', value: '#4338ca', textClass: 'text-indigo-600' }
+];
+
 // Get or create user identity
-const getUserIdentity = (customUsername = null) => {
+const getUserIdentity = (customUsername = null, selectedColor = null) => {
     let user = localStorage.getItem('hookr_user');
     if (!user || customUsername) {
+        const defaultColor = USERNAME_COLORS[0]; // Navy as default
         user = {
             id: crypto.randomUUID(),
             screenName: customUsername || generateScreenName(),
+            color: selectedColor || defaultColor,
+            hasChangedName: !!customUsername,
             createdAt: new Date().toISOString()
         };
         localStorage.setItem('hookr_user', JSON.stringify(user));
     } else {
         user = JSON.parse(user);
+        // Ensure color exists for existing users
+        if (!user.color) {
+            user.color = USERNAME_COLORS[0];
+            localStorage.setItem('hookr_user', JSON.stringify(user));
+        }
     }
     return user;
 };
@@ -200,9 +220,66 @@ const UsernameSetup = ({ onUsernameSet }) => {
     );
 };
 
+// Post Creation Modal Component
+const PostCreationModal = ({ isOpen, onClose, onSubmit, newPostContent, setNewPostContent, isOnline }) => {
+    if (!isOpen) return null;
+
+    const handleSubmit = () => {
+        if (newPostContent.trim()) {
+            onSubmit();
+            onClose();
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="w-full max-w-md terminal-card p-6">
+                <div className="text-center mb-4">
+                    <div className="text-lg font-bold terminal-text">
+                        Share your catch
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <textarea
+                            value={newPostContent}
+                            onChange={(e) => setNewPostContent(e.target.value)}
+                            placeholder="What's biting today? Share your catch, spot, or tip..."
+                            className="w-full h-24 px-3 py-2 terminal-input text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-navy-700"
+                            maxLength={200}
+                            autoFocus
+                        />
+                        <div className="text-xs terminal-accent">
+                            {newPostContent.length}/200 characters
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <button 
+                            onClick={onClose}
+                            className="h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleSubmit}
+                            disabled={!newPostContent.trim() || !isOnline}
+                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
+                        >
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Username Change Modal Component
-const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
+const UsernameChangeModal = ({ currentUsername, currentColor, hasChangedName, onSave, onCancel }) => {
     const [newUsername, setNewUsername] = useState(currentUsername);
+    const [selectedColor, setSelectedColor] = useState(currentColor);
 
     const handleSave = () => {
         if (newUsername.trim().length < 3) {
@@ -213,7 +290,7 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
             alert('Username must be 20 characters or less');
             return;
         }
-        onSave(newUsername.trim().toUpperCase());
+        onSave(newUsername.trim().toUpperCase(), selectedColor);
     };
 
     return (
@@ -221,14 +298,19 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
             <div className="w-full max-w-md terminal-card p-6">
                 <div className="text-center mb-4">
                     <div className="text-lg font-bold terminal-text">
-                        Change Username
+                        {hasChangedName ? 'Update Profile' : 'Change Username'}
                     </div>
+                    {hasChangedName && (
+                        <div className="text-xs terminal-accent mt-1">
+                            You can only change your username once
+                        </div>
+                    )}
                 </div>
                 
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
-                            New username:
+                            Username:
                         </label>
                         <input
                             type="text"
@@ -236,9 +318,34 @@ const UsernameChangeModal = ({ currentUsername, onSave, onCancel }) => {
                             onChange={(e) => setNewUsername(e.target.value.toUpperCase())}
                             className="w-full h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
                             maxLength={20}
+                            disabled={hasChangedName}
                         />
                         <div className="text-xs terminal-accent">
                             {newUsername.length}/20 characters
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold terminal-text block">
+                            Username color:
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {USERNAME_COLORS.map((color) => (
+                                <button
+                                    key={color.name}
+                                    onClick={() => setSelectedColor(color)}
+                                    className={`h-10 rounded border-2 ${
+                                        selectedColor.name === color.name 
+                                            ? 'border-navy-700 ring-2 ring-navy-300' 
+                                            : 'border-gray-300 hover:border-gray-400'
+                                    } focus:outline-none focus:ring-2 focus:ring-navy-700`}
+                                    style={{ backgroundColor: color.value }}
+                                    title={color.name}
+                                />
+                            ))}
+                        </div>
+                        <div className="text-xs terminal-accent">
+                            Preview: <span className={selectedColor.textClass} style={{ fontWeight: 'bold' }}>{newUsername}</span>
                         </div>
                     </div>
 
@@ -313,7 +420,9 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                     {post.author.charAt(0)}
                 </div>
                     <div>
-                        <div className="font-bold terminal-text text-sm">{post.author}</div>
+                        <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
+                            {post.author}
+                        </div>
                         <div className="text-xs terminal-accent">
                             {getTimeAgo(post.timestamp)} • {post.location.distance}mi away
                         </div>
@@ -321,14 +430,14 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                 </div>
                 <button
                     onClick={handleReport}
-                    className={`text-xs px-2 py-1 border-2 ${
+                    className={`text-xs px-2 py-1 ${
                         isReported 
-                            ? 'border-navy-700 bg-navy-100 text-navy-800' 
-                            : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
-                    } focus:outline-none focus:ring-2 focus:ring-navy-700 font-bold`}
+                            ? 'text-gray-500' 
+                            : 'text-red-600 hover:text-red-700'
+                    } focus:outline-none`}
                     disabled={isReported}
                 >
-                    {isReported ? 'Reported' : 'Report'}
+                    {isReported ? '✓' : '🚩'}
                 </button>
             </div>
             
@@ -340,37 +449,37 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                 <div className="flex items-center space-x-2">
                     <button
                         onClick={() => handleVote('up')}
-                        className={`px-3 py-1 text-xs font-bold border-2 ${
+                        className={`px-2 py-1 text-sm ${
                             userVote?.type === 'up' 
-                                ? 'border-green-600 bg-green-100 text-green-700' 
-                                : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
-                        } focus:outline-none focus:ring-2 focus:ring-navy-700`}
+                                ? 'text-green-600 font-bold' 
+                                : 'text-gray-600 hover:text-green-600'
+                        } focus:outline-none`}
                     >
                         ▲ {post.upvotes}
                     </button>
                     
                     <button
                         onClick={() => handleVote('down')}
-                        className={`px-3 py-1 text-xs font-bold border-2 ${
+                        className={`px-2 py-1 text-sm ${
                             userVote?.type === 'down' 
-                                ? 'border-navy-700 bg-navy-100 text-navy-800' 
-                                : 'border-navy-700 bg-white text-navy-700 hover:bg-navy-50'
-                        } focus:outline-none focus:ring-2 focus:ring-navy-700`}
+                                ? 'text-red-600 font-bold' 
+                                : 'text-gray-600 hover:text-red-600'
+                        } focus:outline-none`}
                     >
                         ▼ {post.downvotes}
                     </button>
                     
                     <div className={`px-2 py-1 text-xs font-bold ${
                         post.score > 0 ? 'text-green-600' : 
-                        post.score < 0 ? 'text-navy-800' : 'terminal-text'
+                        post.score < 0 ? 'text-red-600' : 'text-gray-600'
                     }`}>
-                        Score: {post.score > 0 ? '+' : ''}{post.score}
+                        {post.score > 0 ? '+' : ''}{post.score}
                     </div>
                 </div>
                 
                 <button
                     onClick={() => setShowComments(!showComments)}
-                    className="px-3 py-1 text-xs font-bold border-2 border-navy-700 bg-white text-navy-700 hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
+                    className="px-2 py-1 text-sm text-gray-600 hover:text-navy-700 focus:outline-none"
                 >
                     💬 {postComments.length}
                 </button>
@@ -384,7 +493,9 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments }) => {
                                 <div className="w-4 h-4 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
                                     {comment.author.charAt(0)}
                                 </div>
-                                <span className="font-bold terminal-text text-xs">{comment.author}</span>
+                                <span className="font-bold text-xs" style={{ color: comment.authorColor?.value || '#1e3a8a' }}>
+                                    {comment.author}
+                                </span>
                                 <span className="text-xs terminal-accent">{getTimeAgo(comment.timestamp)}</span>
                             </div>
                             <div className="terminal-text text-xs font-mono pl-6">{comment.content}</div>
@@ -431,6 +542,7 @@ const App = () => {
     const [showUsernameChange, setShowUsernameChange] = useState(false);
     const [sortBy, setSortBy] = useState('hot'); // 'hot' or 'new'
     const [currentLocationName, setCurrentLocationName] = useState('');
+    const [showPostModal, setShowPostModal] = useState(false);
     
     const textareaRef = useRef(null);
     
@@ -504,13 +616,57 @@ const App = () => {
     };
     
     // Handle username change
-    const handleUsernameChange = (newUsername) => {
+    const handleUsernameChange = async (newUsername, newColor) => {
+        const oldScreenName = user.screenName;
         const userData = {
             ...user,
-            screenName: newUsername
+            screenName: newUsername,
+            color: newColor,
+            hasChangedName: true
         };
         setUser(userData);
         localStorage.setItem('hookr_user', JSON.stringify(userData));
+        
+        // Update all user's posts with new username if name changed
+        if (oldScreenName !== newUsername && db) {
+            try {
+                const transaction = db.transaction(['posts', 'comments'], 'readwrite');
+                const postsStore = transaction.objectStore('posts');
+                const commentsStore = transaction.objectStore('comments');
+                
+                // Update posts
+                const postsRequest = postsStore.getAll();
+                postsRequest.onsuccess = () => {
+                    const allPosts = postsRequest.result;
+                    allPosts.forEach(post => {
+                        if (post.authorId === user.id) {
+                            post.author = newUsername;
+                            post.authorColor = newColor;
+                            postsStore.put(post);
+                        }
+                    });
+                };
+                
+                // Update comments
+                const commentsRequest = commentsStore.getAll();
+                commentsRequest.onsuccess = () => {
+                    const allComments = commentsRequest.result;
+                    allComments.forEach(comment => {
+                        if (comment.authorId === user.id) {
+                            comment.author = newUsername;
+                            comment.authorColor = newColor;
+                            commentsStore.put(comment);
+                        }
+                    });
+                };
+                
+                // Reload data to reflect changes
+                await loadData(db, user.id);
+            } catch (error) {
+                console.error('Failed to update posts with new username:', error);
+            }
+        }
+        
         setShowUsernameChange(false);
     };
     
@@ -602,6 +758,7 @@ const App = () => {
             content: newPostContent.trim(),
             author: user.screenName,
             authorId: user.id,
+            authorColor: user.color,
             timestamp: new Date().toISOString(),
             upvotes: 0,
             downvotes: 0,
@@ -732,6 +889,7 @@ const App = () => {
             content: content,
             author: user.screenName,
             authorId: user.id,
+            authorColor: user.color,
             timestamp: new Date().toISOString()
         };
         
@@ -765,14 +923,35 @@ const App = () => {
     
     return (
         <div className="min-h-screen bg-gray-50 terminal-text">
+            {/* Post Creation Modal */}
+            <PostCreationModal
+                isOpen={showPostModal}
+                onClose={() => setShowPostModal(false)}
+                onSubmit={handleCreatePost}
+                newPostContent={newPostContent}
+                setNewPostContent={setNewPostContent}
+                isOnline={isOnline}
+            />
+
             {/* Username Change Modal */}
             {showUsernameChange && (
                 <UsernameChangeModal
                     currentUsername={user?.screenName}
+                    currentColor={user?.color}
+                    hasChangedName={user?.hasChangedName}
                     onSave={handleUsernameChange}
                     onCancel={() => setShowUsernameChange(false)}
                 />
             )}
+
+            {/* Floating Action Button */}
+            <button
+                onClick={() => setShowPostModal(true)}
+                className="fixed bottom-6 right-6 w-14 h-14 bg-navy-700 text-white rounded-full shadow-lg hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300 flex items-center justify-center text-2xl z-40"
+                title="Create new post"
+            >
+                +
+            </button>
             
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
@@ -834,32 +1013,7 @@ const App = () => {
                     </div>
                 </div>
                 
-                {/* Create Post */}
-                <div className="p-4">
-                    <div className="terminal-card p-4">
-                        <div className="text-sm font-bold terminal-text mb-2">Share your catch:</div>
-                        <textarea
-                            ref={textareaRef}
-                            value={newPostContent}
-                            onChange={(e) => setNewPostContent(e.target.value)}
-                            placeholder="What's biting today? Share your catch, spot, or tip..."
-                            className="w-full h-20 px-3 py-2 terminal-input text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-navy-700"
-                            maxLength={200}
-                        />
-                        <div className="flex justify-between items-center mt-3">
-                            <div className="text-xs terminal-accent">
-                                {newPostContent.length}/200 characters
-                            </div>
-                            <button
-                                onClick={handleCreatePost}
-                                disabled={!newPostContent.trim() || !isOnline}
-                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
-                            >
-                                Post
-                            </button>
-                        </div>
-                    </div>
-                </div>
+
                 
                 {/* Posts Feed */}
                 <div className="p-4">
