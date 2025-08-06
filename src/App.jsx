@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { postsService, commentsService, votesService, reportsService, subscriptionsService } from './dataService.js';
 
 // Northeast Striped Bass Fishing Locations
 const STRIPED_BASS_LOCATIONS = {
@@ -433,43 +434,17 @@ const geocodeWithAPI = async (query) => {
     return [];
 };
 
-// Utility functions for IndexedDB
-const DB_NAME = 'RipRapDB';
-const DB_VERSION = 1;
-
-const initDB = () => {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-        
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            
-            // Posts store
-            if (!db.objectStoreNames.contains('posts')) {
-                const postsStore = db.createObjectStore('posts', { keyPath: 'id', autoIncrement: true });
-                postsStore.createIndex('timestamp', 'timestamp');
-                postsStore.createIndex('location', 'location');
-            }
-            
-            // Comments store
-            if (!db.objectStoreNames.contains('comments')) {
-                const commentsStore = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
-                commentsStore.createIndex('postId', 'postId');
-                commentsStore.createIndex('timestamp', 'timestamp');
-            }
-            
-            // User votes store
-            if (!db.objectStoreNames.contains('votes')) {
-                const votesStore = db.createObjectStore('votes', { keyPath: 'id', autoIncrement: true });
-                votesStore.createIndex('postId', 'postId');
-                votesStore.createIndex('userId', 'userId');
-            }
-        };
-    });
+// Device ID for anonymous voting (stored locally)
+const getDeviceId = () => {
+    let deviceId = localStorage.getItem('riprap_device_id');
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem('riprap_device_id', deviceId);
+    }
+    return deviceId;
 };
+
+// Database operations now handled by Supabase data service
 
 // Generate unique screen name
 const generateScreenName = () => {
