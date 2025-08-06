@@ -1,3 +1,10 @@
+### Next 
+I'm changing then name of the project to RipRap, make sure all references to Hookr are changed accordingly.
+1. Create a text logo with a handwritten, edgy, font, "RipRap"
+2. Favicon should be an R with the same font
+3. The site tagline/slogan will be, "Share the Shore, Spill the Lore"
+4. Prepare the repo/project for deploy to Netlify, which I will do next.
+
 # 🎣 Hookr - Fishing Community PWA
 
 A Progressive Web App inspired by Yik Yak, designed specifically for fishing communities to anonymously share catches, fishing spots, and tips within a 5-mile radius.
