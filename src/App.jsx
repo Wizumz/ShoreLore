@@ -502,6 +502,31 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
         onClose();
     };
 
+    // Handle manual city input submission
+    const handleCitySubmit = () => {
+        if (!cityInput.trim()) {
+            alert('Please enter a city name');
+            return;
+        }
+
+        // Try to find exact match in search results
+        const exactMatch = US_CITIES.find(city => 
+            `${city.name}, ${city.state}`.toLowerCase() === cityInput.toLowerCase() ||
+            city.name.toLowerCase() === cityInput.toLowerCase()
+        );
+
+        if (exactMatch) {
+            onLocationSet({
+                lat: exactMatch.lat,
+                lng: exactMatch.lng,
+                name: `${exactMatch.name}, ${exactMatch.state}`
+            });
+            onClose();
+        } else {
+            alert('City not found. Please select from autocomplete suggestions or choose a fishing location.');
+        }
+    };
+
     const stripedBassLocations = [
         { id: 'current', name: 'Use Current Location', coords: null },
         ...Object.entries(STRIPED_BASS_LOCATIONS).map(([key, location]) => ({
@@ -562,15 +587,25 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                         <label className="text-sm font-bold terminal-text block">
                             Enter City, State:
                         </label>
-                        <input
-                            type="text"
-                            value={cityInput}
-                            onChange={(e) => handleCityInputChange(e.target.value)}
-                            placeholder="Boston, MA"
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
-                            onFocus={() => cityInput.length >= 2 && setShowSuggestions(searchResults.length > 0)}
-                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                        />
+                        <div className="flex space-x-2">
+                            <input
+                                type="text"
+                                value={cityInput}
+                                onChange={(e) => handleCityInputChange(e.target.value)}
+                                placeholder="Boston, MA"
+                                className="flex-1 h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+                                onFocus={() => cityInput.length >= 2 && setShowSuggestions(searchResults.length > 0)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleCitySubmit()}
+                            />
+                            <button 
+                                onClick={handleCitySubmit}
+                                disabled={!cityInput.trim()}
+                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
+                            >
+                                Set
+                            </button>
+                        </div>
                         
                         {/* Autocomplete Suggestions */}
                         {showSuggestions && searchResults.length > 0 && (
