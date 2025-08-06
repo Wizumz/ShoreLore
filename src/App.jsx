@@ -1,30 +1,51 @@
 const { useState, useEffect, useRef } = React;
 
-// Firebase Configuration (replace with your actual config)
-const firebaseConfig = {
-    // This would be replaced with actual Firebase config in production
-    apiKey: "demo-key",
-    authDomain: "hookr-fishing.firebaseapp.com",
-    projectId: "hookr-fishing",
-    storageBucket: "hookr-fishing.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef123456"
+// Northeast Striped Bass Fishing Locations
+const STRIPED_BASS_LOCATIONS = {
+    'montauk-point-ny': { lat: 41.0362, lng: -71.8562, name: 'Montauk Point, NY', state: 'NY' },
+    'cape-cod-ma': { lat: 41.6688, lng: -70.2962, name: 'Cape Cod, MA', state: 'MA' },
+    'block-island-ri': { lat: 41.1775, lng: -71.5773, name: 'Block Island, RI', state: 'RI' },
+    'chesapeake-bay-md': { lat: 38.9784, lng: -76.4951, name: 'Chesapeake Bay, MD', state: 'MD' },
+    'sandy-hook-nj': { lat: 40.4168, lng: -74.0018, name: 'Sandy Hook, NJ', state: 'NJ' },
+    'orient-point-ny': { lat: 41.1615, lng: -72.2351, name: 'Orient Point, NY', state: 'NY' },
+    'race-point-ma': { lat: 42.0654, lng: -70.2457, name: 'Race Point, MA', state: 'MA' },
+    'watch-hill-ri': { lat: 41.3079, lng: -71.8565, name: 'Watch Hill, RI', state: 'RI' },
+    'martha-vineyard-ma': { lat: 41.3888, lng: -70.6420, name: 'Martha\'s Vineyard, MA', state: 'MA' },
+    'nantucket-ma': { lat: 41.2835, lng: -70.0995, name: 'Nantucket, MA', state: 'MA' },
+    'long-island-sound-ct': { lat: 41.1015, lng: -72.6732, name: 'Long Island Sound, CT', state: 'CT' },
+    'rhode-island-sound-ri': { lat: 41.4221, lng: -71.4774, name: 'Rhode Island Sound, RI', state: 'RI' },
+    'buzzards-bay-ma': { lat: 41.5389, lng: -70.9481, name: 'Buzzards Bay, MA', state: 'MA' },
+    'delaware-bay-de': { lat: 38.9108, lng: -75.1818, name: 'Delaware Bay, DE', state: 'DE' },
+    'hudson-river-ny': { lat: 41.7658, lng: -73.9776, name: 'Hudson River, NY', state: 'NY' }
 };
 
-// Initialize Firebase (in production, this would use real config)
-let auth = null;
-let db_firebase = null;
-if (typeof firebase !== 'undefined') {
-    try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        auth = firebase.auth();
-        db_firebase = firebase.firestore();
-    } catch (error) {
-        console.log('Firebase not available for demo');
+// Device persistence solutions
+const DEVICE_PERSISTENCE_OPTIONS = [
+    {
+        name: 'Browser Fingerprinting',
+        description: 'Generate unique ID from device characteristics (screen, timezone, language, etc.)',
+        reliability: 'Medium - Can survive cache clearing but not incognito mode',
+        implementation: 'Use canvas fingerprinting, WebGL, audio context fingerprinting'
+    },
+    {
+        name: 'QR Code Account Recovery',
+        description: 'Generate QR code containing encrypted account data for backup',
+        reliability: 'High - User controls backup and can restore on any device',
+        implementation: 'Export account as QR code, user saves/screenshots, can scan to restore'
+    },
+    {
+        name: 'Email Backup Code',
+        description: 'Send backup code to email without requiring login',
+        reliability: 'High - Works across devices and survives cache clearing',
+        implementation: 'User provides email, receive code, enter code to restore account'
+    },
+    {
+        name: 'Local Network Storage',
+        description: 'Store backup on local network device or browser sync',
+        reliability: 'Medium - Works if user has consistent network/browser',
+        implementation: 'Use IndexedDB with browser sync or local network storage'
     }
-}
+];
 
 // Fishy Score Tiers and Icons
 const FISHY_TIERS = [
@@ -64,6 +85,41 @@ const calculateFishyScore = (posts, userVotes, comments) => {
 // Get Fishy Tier from Score
 const getFishyTier = (score) => {
     return FISHY_TIERS.find(tier => score >= tier.min && score <= tier.max) || FISHY_TIERS[0];
+};
+
+// Popular US Cities for autocomplete (focusing on Northeast)
+const US_CITIES = [
+    { name: 'Boston', state: 'MA', lat: 42.3601, lng: -71.0589 },
+    { name: 'New York City', state: 'NY', lat: 40.7128, lng: -74.0060 },
+    { name: 'Providence', state: 'RI', lat: 41.8240, lng: -71.4128 },
+    { name: 'Hartford', state: 'CT', lat: 41.7658, lng: -72.6734 },
+    { name: 'Portland', state: 'ME', lat: 43.6591, lng: -70.2568 },
+    { name: 'Burlington', state: 'VT', lat: 44.4759, lng: -73.2121 },
+    { name: 'Manchester', state: 'NH', lat: 42.9956, lng: -71.4548 },
+    { name: 'Baltimore', state: 'MD', lat: 39.2904, lng: -76.6122 },
+    { name: 'Washington', state: 'DC', lat: 38.9072, lng: -77.0369 },
+    { name: 'Philadelphia', state: 'PA', lat: 39.9526, lng: -75.1652 },
+    { name: 'Atlantic City', state: 'NJ', lat: 39.3643, lng: -74.4229 },
+    { name: 'Dover', state: 'DE', lat: 39.1612, lng: -75.5264 },
+    { name: 'Albany', state: 'NY', lat: 42.6526, lng: -73.7562 },
+    { name: 'Buffalo', state: 'NY', lat: 42.8864, lng: -78.8784 },
+    { name: 'Rochester', state: 'NY', lat: 43.1566, lng: -77.6088 },
+    { name: 'Bridgeport', state: 'CT', lat: 41.1865, lng: -73.1952 },
+    { name: 'New Haven', state: 'CT', lat: 41.3083, lng: -72.9279 },
+    { name: 'Worcester', state: 'MA', lat: 42.2626, lng: -71.8023 },
+    { name: 'Springfield', state: 'MA', lat: 42.1015, lng: -72.5898 },
+    { name: 'Newport', state: 'RI', lat: 41.4901, lng: -71.3128 }
+];
+
+// Function to search cities
+const searchCities = (query) => {
+    if (!query || query.length < 2) return [];
+    const lowercaseQuery = query.toLowerCase();
+    return US_CITIES.filter(city => 
+        city.name.toLowerCase().includes(lowercaseQuery) || 
+        city.state.toLowerCase().includes(lowercaseQuery) ||
+        `${city.name}, ${city.state}`.toLowerCase().includes(lowercaseQuery)
+    ).slice(0, 10);
 };
 
 // Utility functions for IndexedDB
@@ -165,36 +221,9 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c;
 };
 
-// Convert zip code to approximate coordinates (basic US zip codes)
-const getCoordinatesFromZip = async (zipCode) => {
-    // This is a simple lookup for common US zip codes - in production you'd use a proper API
-    const zipToCoords = {
-        '10001': { lat: 40.7506, lng: -73.9972, name: 'New York, NY' },
-        '90210': { lat: 34.0901, lng: -118.4065, name: 'Beverly Hills, CA' },
-        '60601': { lat: 41.8825, lng: -87.6441, name: 'Chicago, IL' },
-        '33101': { lat: 25.7743, lng: -80.1937, name: 'Miami, FL' },
-        '78701': { lat: 30.2711, lng: -97.7436, name: 'Austin, TX' },
-        '02101': { lat: 42.3583, lng: -71.0603, name: 'Boston, MA' },
-        '98101': { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
-        '30301': { lat: 33.7490, lng: -84.3880, name: 'Atlanta, GA' },
-        '80201': { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' },
-        '19101': { lat: 39.9526, lng: -75.1652, name: 'Philadelphia, PA' }
-    };
-    
-    return zipToCoords[zipCode] || null;
-};
 
-// Major city locations for quick selection
-const PRESET_LOCATIONS = {
-    seattle: { lat: 47.6062, lng: -122.3321, name: 'Seattle, WA' },
-    miami: { lat: 25.7617, lng: -80.1918, name: 'Miami, FL' },
-    chicago: { lat: 41.8781, lng: -87.6298, name: 'Chicago, IL' },
-    denver: { lat: 39.7392, lng: -104.9903, name: 'Denver, CO' },
-    nyc: { lat: 40.7128, lng: -74.0060, name: 'New York, NY' },
-    la: { lat: 34.0522, lng: -118.2437, name: 'Los Angeles, CA' },
-    austin: { lat: 30.2672, lng: -97.7431, name: 'Austin, TX' },
-    boston: { lat: 42.3601, lng: -71.0589, name: 'Boston, MA' }
-};
+
+
 
 // Get approximate location name from coordinates
 const getApproximateLocation = (lat, lng) => {
@@ -202,7 +231,7 @@ const getApproximateLocation = (lat, lng) => {
     let closestLocation = null;
     let closestDistance = Infinity;
     
-    Object.entries(PRESET_LOCATIONS).forEach(([key, location]) => {
+    Object.entries(STRIPED_BASS_LOCATIONS).forEach(([key, location]) => {
         const distance = calculateDistance(lat, lng, location.lat, location.lng);
         if (distance < closestDistance) {
             closestDistance = distance;
@@ -345,177 +374,8 @@ const UsernameSetup = ({ onUsernameSet }) => {
     );
 };
 
-// Login Modal Component
-const LoginModal = ({ isOpen, onClose, onLogin }) => {
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-
-    if (!isOpen) return null;
-
-    const handleEmailLogin = async () => {
-        if (!email.trim() || !password.trim()) {
-            alert('Please fill in all fields');
-            return;
-        }
-
-        if (isRegistering && password !== confirmPassword) {
-            alert('Passwords do not match');
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            // For demo purposes, simulate login
-            const mockUser = {
-                uid: crypto.randomUUID(),
-                email: email,
-                displayName: email.split('@')[0],
-                photoURL: null
-            };
-            
-            onLogin(mockUser);
-            onClose();
-        } catch (error) {
-            alert('Authentication failed: ' + error.message);
-        }
-        setIsLoading(false);
-    };
-
-    const handleGoogleLogin = async () => {
-        setIsLoading(true);
-        try {
-            // For demo purposes, simulate Google login
-            const mockUser = {
-                uid: crypto.randomUUID(),
-                email: 'user@gmail.com',
-                displayName: 'Google User',
-                photoURL: 'https://via.placeholder.com/40'
-            };
-            
-            onLogin(mockUser);
-            onClose();
-        } catch (error) {
-            alert('Google login failed: ' + error.message);
-        }
-        setIsLoading(false);
-    };
-
-    const handleAppleLogin = async () => {
-        setIsLoading(true);
-        try {
-            // For demo purposes, simulate Apple login
-            const mockUser = {
-                uid: crypto.randomUUID(),
-                email: 'user@icloud.com',
-                displayName: 'Apple User',
-                photoURL: null
-            };
-            
-            onLogin(mockUser);
-            onClose();
-        } catch (error) {
-            alert('Apple login failed: ' + error.message);
-        }
-        setIsLoading(false);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-md terminal-card p-6">
-                <div className="text-center mb-4">
-                    <div className="text-lg font-bold terminal-text">
-                        {isRegistering ? 'Create Account' : 'Sign In'}
-                    </div>
-                    <div className="text-xs terminal-accent mt-1">
-                        {isRegistering ? 'Join the fishing community' : 'Welcome back, angler!'}
-                    </div>
-                </div>
-                
-                <div className="space-y-4">
-                    {/* Email/Password Form */}
-                    <div className="space-y-3">
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email"
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
-                        />
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
-                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
-                        />
-                        {isRegistering && (
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="Confirm Password"
-                                className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
-                            />
-                        )}
-                        <button 
-                            onClick={handleEmailLogin}
-                            disabled={isLoading}
-                            className="w-full h-10 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
-                        >
-                            {isLoading ? '...' : (isRegistering ? 'Create Account' : 'Sign In')}
-                        </button>
-                    </div>
-
-                    <div className="text-center text-xs terminal-accent">or</div>
-
-                    {/* Social Login Buttons */}
-                    <div className="space-y-2">
-                        <button 
-                            onClick={handleGoogleLogin}
-                            disabled={isLoading}
-                            className="w-full h-10 px-3 py-2 bg-red-600 text-white text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 flex items-center justify-center space-x-2"
-                        >
-                            <span>🔍</span>
-                            <span>Continue with Google</span>
-                        </button>
-                        <button 
-                            onClick={handleAppleLogin}
-                            disabled={isLoading}
-                            className="w-full h-10 px-3 py-2 bg-black text-white text-sm font-bold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 flex items-center justify-center space-x-2"
-                        >
-                            <span>🍎</span>
-                            <span>Continue with Apple</span>
-                        </button>
-                    </div>
-
-                    <div className="text-center">
-                        <button 
-                            onClick={() => setIsRegistering(!isRegistering)}
-                            className="text-xs text-navy-600 hover:text-navy-800 underline"
-                        >
-                            {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-                        </button>
-                    </div>
-
-                    <div className="pt-2">
-                        <button 
-                            onClick={onClose}
-                            className="w-full h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Account Modal Component
-const AccountModal = ({ isOpen, onClose, user, userStats, onLogout }) => {
+// Account Modal Component  
+const AccountModal = ({ isOpen, onClose, user, userStats }) => {
     if (!isOpen) return null;
 
     const fishyTier = getFishyTier(userStats.fishyScore);
@@ -528,7 +388,7 @@ const AccountModal = ({ isOpen, onClose, user, userStats, onLogout }) => {
                         My Account
                     </div>
                     <div className="text-xs terminal-accent mt-1">
-                        {user?.email}
+                        Device-based account
                     </div>
                 </div>
                 
@@ -582,13 +442,17 @@ const AccountModal = ({ isOpen, onClose, user, userStats, onLogout }) => {
                         </div>
                     </div>
 
-                    <div className="pt-2 space-y-2">
-                        <button 
-                            onClick={onLogout}
-                            className="w-full h-10 px-3 py-2 bg-red-600 text-white text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                        >
-                            Sign Out
-                        </button>
+                    {/* Device Persistence Info */}
+                    <div className="bg-yellow-50 border border-yellow-200 p-3 text-xs">
+                        <div className="font-bold text-yellow-800 mb-2">Account Persistence</div>
+                        <div className="text-yellow-700 space-y-1">
+                            <div>• Account saved to this device</div>
+                            <div>• Clear cache = lose account</div>
+                            <div>• Different device = new account</div>
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
                         <button 
                             onClick={onClose}
                             className="w-full h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
@@ -602,136 +466,52 @@ const AccountModal = ({ isOpen, onClose, user, userStats, onLogout }) => {
     );
 };
 
-// Google Maps Location Picker Component
-const GoogleMapsLocationPicker = ({ isOpen, onClose, onLocationSelected }) => {
-    const mapRef = useRef(null);
-    const [map, setMap] = useState(null);
-    const [marker, setMarker] = useState(null);
-    const [selectedLocation, setSelectedLocation] = useState(null);
+// Location Selection Modal Component
+const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation, currentRadius, onRadiusChange }) => {
+    const [cityInput, setCityInput] = useState('');
+    const [selectedPreset, setSelectedPreset] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
-    useEffect(() => {
-        if (isOpen && !map && window.google) {
-            const mapInstance = new window.google.maps.Map(mapRef.current, {
-                center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
-                zoom: 10,
-            });
+    if (!isOpen) return null;
 
-            const markerInstance = new window.google.maps.Marker({
-                position: { lat: 40.7128, lng: -74.0060 },
-                map: mapInstance,
-                draggable: true,
-            });
-
-            mapInstance.addListener('click', (e) => {
-                const lat = e.latLng.lat();
-                const lng = e.latLng.lng();
-                markerInstance.setPosition({ lat, lng });
-                setSelectedLocation({ lat, lng });
-            });
-
-            markerInstance.addListener('dragend', (e) => {
-                const lat = e.latLng.lat();
-                const lng = e.latLng.lng();
-                setSelectedLocation({ lat, lng });
-            });
-
-            setMap(mapInstance);
-            setMarker(markerInstance);
-            setSelectedLocation({ lat: 40.7128, lng: -74.0060 });
-        }
-    }, [isOpen]);
-
-    const handleConfirm = () => {
-        if (selectedLocation) {
-            const locationName = getApproximateLocation(selectedLocation.lat, selectedLocation.lng);
-            onLocationSelected({
-                ...selectedLocation,
-                name: locationName
-            });
-            onClose();
+    // Handle city input change with autocomplete
+    const handleCityInputChange = (value) => {
+        setCityInput(value);
+        if (value.length >= 2) {
+            const results = searchCities(value);
+            setSearchResults(results);
+            setShowSuggestions(results.length > 0);
+        } else {
+            setSearchResults([]);
+            setShowSuggestions(false);
         }
     };
 
-    if (!isOpen) return null;
+    // Handle city selection from autocomplete
+    const handleCitySelect = (city) => {
+        setCityInput(`${city.name}, ${city.state}`);
+        setSearchResults([]);
+        setShowSuggestions(false);
+        onLocationSet({
+            lat: city.lat,
+            lng: city.lng,
+            name: `${city.name}, ${city.state}`
+        });
+        onClose();
+    };
 
-    return (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-lg terminal-card p-6">
-                <div className="text-center mb-4">
-                    <div className="text-lg font-bold terminal-text">
-                        Pick Location on Map
-                    </div>
-                    <div className="text-xs terminal-accent mt-1">
-                        Click or drag the marker to set your location
-                    </div>
-                </div>
-                
-                <div className="space-y-4">
-                    <div 
-                        ref={mapRef}
-                        className="w-full h-64 bg-gray-200 border rounded"
-                        style={{ minHeight: '250px' }}
-                    >
-                        {!window.google && (
-                            <div className="flex items-center justify-center h-full text-sm terminal-accent">
-                                Loading Google Maps...
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <button 
-                            onClick={onClose}
-                            className="h-10 px-3 py-2 border-2 border-navy-700 bg-white text-navy-700 text-sm font-bold hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-700"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleConfirm}
-                            disabled={!selectedLocation}
-                            className="h-10 px-3 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:opacity-50"
-                        >
-                            Select Location
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Location Selection Modal Component
-const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocation }) => {
-    const [zipCode, setZipCode] = useState('');
-    const [selectedPreset, setSelectedPreset] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [showMapPicker, setShowMapPicker] = useState(false);
-
-    if (!isOpen) return null;
-
-    const presetLocations = [
+    const stripedBassLocations = [
         { id: 'current', name: 'Use Current Location', coords: null },
-        ...Object.entries(PRESET_LOCATIONS).map(([key, location]) => ({
+        ...Object.entries(STRIPED_BASS_LOCATIONS).map(([key, location]) => ({
             id: key,
             name: location.name,
             coords: location
         }))
     ];
 
-    const handleZipCodeSubmit = async () => {
-        if (!zipCode.trim()) return;
-        
-        setIsLoading(true);
-        const coords = await getCoordinatesFromZip(zipCode.trim());
-        setIsLoading(false);
-        
-        if (coords) {
-            onLocationSet(coords);
-            onClose();
-        } else {
-            alert('Zip code not found. Please try a different zip code or select a preset location.');
-        }
-    };
+
 
     const handlePresetSelect = (location) => {
         if (location.id === 'current') {
@@ -755,52 +535,68 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                 </div>
                 
                 <div className="space-y-4">
-                    {/* Zip Code Input */}
+                    {/* Radius Selection */}
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
-                            Enter Zip Code:
+                            Search Radius: {currentRadius} miles
                         </label>
-                        <div className="flex space-x-2">
-                            <input
-                                type="text"
-                                value={zipCode}
-                                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                                placeholder="12345"
-                                className="flex-1 h-10 px-3 py-2 terminal-input text-sm font-mono focus:outline-none focus:ring-2 focus:ring-navy-700"
-                                maxLength={5}
-                            />
-                            <button 
-                                onClick={handleZipCodeSubmit}
-                                disabled={zipCode.length !== 5 || isLoading}
-                                className="px-4 py-2 terminal-button text-sm font-bold hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 disabled:terminal-button:disabled"
-                            >
-                                {isLoading ? '...' : 'Go'}
-                            </button>
+                        <input
+                            type="range"
+                            min="5"
+                            max="100"
+                            step="5"
+                            value={currentRadius}
+                            onChange={(e) => onRadiusChange(parseInt(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs terminal-accent">
+                            <span>5 mi</span>
+                            <span>100 mi</span>
                         </div>
                     </div>
 
-                    <div className="text-center text-xs terminal-accent">or</div>
+                    <div className="text-center text-xs terminal-accent">Select a location:</div>
 
-                    {/* Map Picker */}
-                    <div className="space-y-2">
-                        <button 
-                            onClick={() => setShowMapPicker(true)}
-                            className="w-full h-10 px-3 py-2 bg-green-600 text-white text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center space-x-2"
-                        >
-                            <span>🗺️</span>
-                            <span>Select on Map</span>
-                        </button>
+                    {/* City/State Input with Autocomplete */}
+                    <div className="space-y-2 relative">
+                        <label className="text-sm font-bold terminal-text block">
+                            Enter City, State:
+                        </label>
+                        <input
+                            type="text"
+                            value={cityInput}
+                            onChange={(e) => handleCityInputChange(e.target.value)}
+                            placeholder="Boston, MA"
+                            className="w-full h-10 px-3 py-2 terminal-input text-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+                            onFocus={() => cityInput.length >= 2 && setShowSuggestions(searchResults.length > 0)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        />
+                        
+                        {/* Autocomplete Suggestions */}
+                        {showSuggestions && searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                                {searchResults.map((city, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleCitySelect(city)}
+                                        className="w-full text-left px-3 py-2 text-sm hover:bg-navy-50 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        {city.name}, {city.state}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    <div className="text-center text-xs terminal-accent">or</div>
+                    <div className="text-center text-xs terminal-accent">or choose a fishing hotspot:</div>
 
-                    {/* Preset Locations */}
+                    {/* Striped Bass Fishing Locations */}
                     <div className="space-y-2">
                         <label className="text-sm font-bold terminal-text block">
-                            Quick Select:
+                            Northeast Striped Bass Locations:
                         </label>
-                        <div className="space-y-1">
-                            {presetLocations.map((location) => (
+                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                            {stripedBassLocations.map((location) => (
                                 <button
                                     key={location.id}
                                     onClick={() => handlePresetSelect(location)}
@@ -811,16 +607,6 @@ const LocationSelectionModal = ({ isOpen, onClose, onLocationSet, currentLocatio
                             ))}
                         </div>
                     </div>
-
-                    {/* Google Maps Location Picker */}
-                    <GoogleMapsLocationPicker
-                        isOpen={showMapPicker}
-                        onClose={() => setShowMapPicker(false)}
-                        onLocationSelected={(location) => {
-                            onLocationSet(location);
-                            setShowMapPicker(false);
-                        }}
-                    />
 
                     <div className="pt-2">
                         <button 
@@ -1075,11 +861,10 @@ const App = () => {
     const [currentLocationName, setCurrentLocationName] = useState('');
     const [showPostModal, setShowPostModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
-    const [zipCodeInput, setZipCodeInput] = useState('');
+
     const [customLocation, setCustomLocation] = useState(null);
     const [showAccountModal, setShowAccountModal] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false);
-    const [authUser, setAuthUser] = useState(null);
+    const [locationRadius, setLocationRadius] = useState(10);
     const [userStats, setUserStats] = useState({ posts: [], comments: [], fishyScore: 0 });
     
     const textareaRef = useRef(null);
@@ -1120,8 +905,8 @@ const App = () => {
                     },
                     (error) => {
                         console.error('GPS location failed:', error.message);
-                        // Fallback to a default location (Seattle) if GPS fails
-                        const fallbackLocation = PRESET_LOCATIONS.seattle;
+                        // Fallback to a default location (Cape Cod) if GPS fails
+                        const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
                         setUserLocation(fallbackLocation);
                         setCurrentLocationName(`${fallbackLocation.name} (Default)`);
                     },
@@ -1134,7 +919,7 @@ const App = () => {
             } else {
                 console.warn('Geolocation not supported');
                 // Fallback to a default location
-                const fallbackLocation = PRESET_LOCATIONS.seattle;
+                const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
                 setUserLocation(fallbackLocation);
                 setCurrentLocationName(`${fallbackLocation.name} (Default)`);
             }
@@ -1169,23 +954,7 @@ const App = () => {
         setShowUsernameSetup(false);
     };
 
-    // Handle authentication
-    const handleLogin = (authUser) => {
-        setAuthUser(authUser);
-        // Link auth user with local user or create new one
-        const userData = getUserIdentity(authUser.displayName || authUser.email.split('@')[0]);
-        setUser({ ...userData, authUser });
-        setShowLoginModal(false);
-        calculateUserStats();
-    };
 
-    const handleLogout = () => {
-        setAuthUser(null);
-        setUser(null);
-        setUserStats({ posts: [], comments: [], fishyScore: 0 });
-        localStorage.removeItem('hookr_user');
-        setShowAccountModal(false);
-    };
 
     // Calculate user statistics
     const calculateUserStats = () => {
@@ -1277,7 +1046,7 @@ const App = () => {
                     effectiveLocation.lat, effectiveLocation.lng,
                     post.location.lat, post.location.lng
                 );
-                return distance <= 10;
+                return distance <= locationRadius;
             }
             return true;
         });
@@ -1487,20 +1256,12 @@ const App = () => {
     
     return (
         <div className="min-h-screen bg-gray-50 terminal-text overflow-x-hidden">
-            {/* Login Modal */}
-            <LoginModal
-                isOpen={showLoginModal}
-                onClose={() => setShowLoginModal(false)}
-                onLogin={handleLogin}
-            />
-
             {/* Account Modal */}
             <AccountModal
                 isOpen={showAccountModal}
                 onClose={() => setShowAccountModal(false)}
-                user={authUser}
+                user={user}
                 userStats={userStats}
-                onLogout={handleLogout}
             />
 
             {/* Location Selection Modal */}
@@ -1509,6 +1270,8 @@ const App = () => {
                 onClose={() => setShowLocationModal(false)}
                 onLocationSet={handleLocationSet}
                 currentLocation={userLocation}
+                currentRadius={locationRadius}
+                onRadiusChange={setLocationRadius}
             />
 
             {/* Post Creation Modal */}
@@ -1545,34 +1308,23 @@ const App = () => {
                             </div>
                         </div>
                         <div className="flex items-center space-x-1 sm:space-x-2">
-                            {authUser ? (
-                                <>
-                                    <button
-                                        onClick={() => setShowAccountModal(true)}
-                                        className="flex items-center space-x-1 text-xs sm:text-sm font-bold px-2 py-1 hover:bg-navy-50 rounded focus:outline-none focus:ring-2 focus:ring-navy-300"
-                                        style={{ color: user?.color?.value || '#1e3a8a' }}
-                                    >
-                                        <span>{user?.screenName}</span>
-                                        {userStats.fishyScore > 0 && (
-                                            <div className="flex items-center space-x-1">
-                                                <span style={{ fontSize: '12px', color: getFishyTier(userStats.fishyScore).color }}>
-                                                    {getFishyTier(userStats.fishyScore).icon}
-                                                </span>
-                                                <span className="text-xs font-bold" style={{ color: getFishyTier(userStats.fishyScore).color }}>
-                                                    {userStats.fishyScore}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => setShowLoginModal(true)}
-                                    className="text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 terminal-button hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300"
-                                >
-                                    Sign In
-                                </button>
-                            )}
+                            <button
+                                onClick={() => setShowAccountModal(true)}
+                                className="flex items-center space-x-1 text-xs sm:text-sm font-bold px-2 py-1 hover:bg-navy-50 rounded focus:outline-none focus:ring-2 focus:ring-navy-300"
+                                style={{ color: user?.color?.value || '#1e3a8a' }}
+                            >
+                                <span>{user?.screenName}</span>
+                                {userStats.fishyScore > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                        <span style={{ fontSize: '12px', color: getFishyTier(userStats.fishyScore).color }}>
+                                            {getFishyTier(userStats.fishyScore).icon}
+                                        </span>
+                                        <span className="text-xs font-bold" style={{ color: getFishyTier(userStats.fishyScore).color }}>
+                                            {userStats.fishyScore}
+                                        </span>
+                                    </div>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1586,7 +1338,7 @@ const App = () => {
                     >
                         <div className="text-sm font-bold terminal-text mb-1">📍 Local Area:</div>
                         <div className="text-xs terminal-accent">
-                            {currentLocationName} • 10 mile radius
+                            {currentLocationName} • {locationRadius} mile radius
                         </div>
                         <div className="text-xs text-navy-600 mt-1">
                             Click to change location
