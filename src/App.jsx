@@ -1320,7 +1320,6 @@ const App = () => {
     const [userLocation, setUserLocation] = useState(null);
 
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [db, setDb] = useState(null);
     const [showUsernameSetup, setShowUsernameSetup] = useState(false);
 
     const [sortBy, setSortBy] = useState('hot'); // 'hot', 'new', or 'coastwide'
@@ -1349,6 +1348,13 @@ const App = () => {
     
     const textareaRef = useRef(null);
     
+    // Real-time subscriptions
+    const [postsSubscription, setPostsSubscription] = useState(null);
+    const [commentsSubscription, setCommentsSubscription] = useState(null);
+    
+    // Device ID for anonymous operations
+    const deviceId = getDeviceId();
+    
     // Check if user needs to set up username and load location settings
     useEffect(() => {
         const userData = localStorage.getItem('riprap_user');
@@ -1372,14 +1378,13 @@ const App = () => {
         if (!user) return;
         
         const initApp = async () => {
-            // Initialize database
+            // Load posts and set up real-time subscriptions
             try {
-                const database = await initDB();
-                setDb(database);
-                await loadData(database, user.id);
+                await loadPosts();
+                setupRealtimeSubscriptions();
                 
             } catch (error) {
-                console.error('Failed to initialize database:', error);
+                console.error('Failed to initialize app:', error);
             }
             
             // Get user location - only use GPS if no saved custom location
@@ -1451,6 +1456,20 @@ const App = () => {
             saveLocationSettings(customLocation, locationRadius);
         }
     }, [locationRadius, customLocation]);
+
+    // Reload posts when location or radius changes
+    useEffect(() => {
+        if (!user || !userLocation) return;
+        
+        loadPosts();
+        setupRealtimeSubscriptions();
+        
+        return () => {
+            if (postsSubscription) {
+                subscriptionsService.unsubscribe(postsSubscription);
+            }
+        };
+    }, [user, userLocation, locationRadius, sortBy]);
     
     // Infinite scroll for lazy loading
     useEffect(() => {
@@ -1534,37 +1553,84 @@ const App = () => {
 
 
     
-    // Load data from IndexedDB
-    const loadData = async (database, userId) => {
+    // Load posts from Supabase
+    const loadPosts = async () => {
+        if (!userLocation) return;
+        
         try {
-            const transaction = database.transaction(['posts', 'comments', 'votes'], 'readonly');
+            const nearbyPosts = await postsService.getNearbyPosts(
+                userLocation.lat, 
+                userLocation.lng, 
+                locationRadius
+            );
             
-            // Load posts
-            const postsRequest = transaction.objectStore('posts').getAll();
-            const postsResult = await new Promise((resolve, reject) => {
-                postsRequest.onsuccess = () => resolve(postsRequest.result);
-                postsRequest.onerror = () => reject(postsRequest.error);
-            });
+            // Sort posts based on selected criteria
+            const sortedPosts = sortPosts(nearbyPosts);
+            setPosts(sortedPosts);
             
-            // Load comments
-            const commentsRequest = transaction.objectStore('comments').getAll();
-            const commentsResult = await new Promise((resolve, reject) => {
-                commentsRequest.onsuccess = () => resolve(commentsRequest.result);
-                commentsRequest.onerror = () => reject(commentsRequest.error);
-            });
+            // Load user votes for these posts
+            const postIds = sortedPosts.map(post => post.id);
+            const votes = await votesService.getVotesForPosts(postIds, deviceId);
+            setUserVotes(votes);
             
-            // Load user votes
-            const votesRequest = transaction.objectStore('votes').index('userId').getAll(userId);
-            const votesResult = await new Promise((resolve, reject) => {
-                votesRequest.onsuccess = () => resolve(votesRequest.result);
-                votesRequest.onerror = () => reject(votesRequest.error);
-            });
-            
-            setPosts(postsResult || []);
-            setComments(commentsResult || []);
-            setUserVotes(votesResult || []);
         } catch (error) {
-            console.error('Failed to load data:', error);
+            console.error('Error loading posts:', error);
+        }
+    };
+
+    // Setup real-time subscriptions
+    const setupRealtimeSubscriptions = () => {
+        if (!userLocation) return;
+        
+        // Unsubscribe from previous subscription
+        if (postsSubscription) {
+            subscriptionsService.unsubscribe(postsSubscription);
+        }
+        
+        // Subscribe to new posts and updates
+        const newSubscription = subscriptionsService.subscribeToNearbyPosts(
+            userLocation.lat,
+            userLocation.lng,
+            locationRadius,
+            (newPost) => {
+                // Add new post to the top
+                setPosts(prevPosts => {
+                    const updated = [newPost, ...prevPosts];
+                    return sortPosts(updated);
+                });
+            },
+            (updatedPost) => {
+                // Update existing post
+                setPosts(prevPosts => {
+                    const updated = prevPosts.map(post => 
+                        post.id === updatedPost.id ? updatedPost : post
+                    );
+                    return sortPosts(updated);
+                });
+            }
+        );
+        
+        setPostsSubscription(newSubscription);
+    };
+
+    // Sort posts based on selected criteria
+    const sortPosts = (postsToSort) => {
+        const sorted = [...postsToSort];
+        switch (sortBy) {
+            case 'newest':
+            case 'new':
+                return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            case 'oldest':
+                return sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            case 'hot':
+            case 'topVoted':
+                return sorted.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+            case 'mostComments':
+                return sorted.sort((a, b) => (b.comment_count || 0) - (a.comment_count || 0));
+            case 'closest':
+                return sorted.sort((a, b) => (a.distance_miles || 0) - (b.distance_miles || 0));
+            default:
+                return sorted;
         }
     };
     
@@ -1659,7 +1725,7 @@ const App = () => {
     
     // Create new post
     const handleCreatePost = async () => {
-        if (!newPostContent.trim() || !db || !user || !userLocation) return;
+        if (!newPostContent.trim() || !user || !userLocation) return;
         
         // Rate limiting check
         const rateLimitCheck = checkRateLimit(
@@ -1682,46 +1748,32 @@ const App = () => {
             return;
         }
         
-        const newPost = {
-            content: newPostContent.trim(),
-            author: user.screenName,
-            authorId: user.id,
-            authorColor: user.color,
-            timestamp: new Date().toISOString(),
-            upvotes: 0,
-            downvotes: 0,
-            score: 0,
-            location: {
-                lat: userLocation.lat,
-                lng: userLocation.lng,
-                distance: 0,
-                nearestCity: getNearestCityState(userLocation.lat, userLocation.lng)
-            }
-        };
-        
         try {
-            const transaction = db.transaction(['posts'], 'readwrite');
-            const store = transaction.objectStore('posts');
-            await new Promise((resolve, reject) => {
-                const request = store.add(newPost);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
+            await postsService.createPost(
+                newPostContent.trim(),
+                user.screenName,
+                user.color,
+                userLocation.lat,
+                userLocation.lng,
+                currentLocationName
+            );
             
-            await loadData(db, user.id);
             setNewPostContent('');
+            setShowPostModal(false);
+            // Posts will be updated via real-time subscription
             
             // Update rate limiting counters
             setLastPostTime(Date.now());
             setPostCount(prev => prev + 1);
         } catch (error) {
             console.error('Failed to create post:', error);
+            alert('Failed to create post. Please try again.');
         }
     };
     
     // Handle voting
     const handleVote = async (postId, voteType) => {
-        if (!db || !user) return;
+        if (!user) return;
         
         // Rate limiting check
         const rateLimitCheck = checkRateLimit(
@@ -1738,90 +1790,24 @@ const App = () => {
         }
         
         try {
-            const transaction = db.transaction(['posts', 'votes'], 'readwrite');
-            const postsStore = transaction.objectStore('posts');
-            const votesStore = transaction.objectStore('votes');
+            const currentVote = userVotes[postId] || 0;
+            const newVote = currentVote === voteType ? 0 : voteType;
             
-            // Get current post
-            const postRequest = postsStore.get(postId);
-            const post = await new Promise((resolve, reject) => {
-                postRequest.onsuccess = () => resolve(postRequest.result);
-                postRequest.onerror = () => reject(postRequest.error);
-            });
+            // Convert 'up'/'down' to 1/-1/0 for Supabase
+            let voteValue = 0;
+            if (newVote === 'up') voteValue = 1;
+            else if (newVote === 'down') voteValue = -1;
             
-            // Check for existing vote
-            const existingVoteRequest = votesStore.index('postId').getAll(postId);
-            const existingVotes = await new Promise((resolve, reject) => {
-                existingVoteRequest.onsuccess = () => resolve(existingVoteRequest.result);
-                existingVoteRequest.onerror = () => reject(existingVoteRequest.error);
-            });
+            await votesService.castVote(postId, deviceId, voteValue);
             
-            const userVote = existingVotes.find(vote => vote.userId === user.id);
+            // Update local state
+            setUserVotes(prev => ({
+                ...prev,
+                [postId]: newVote
+            }));
             
-            if (userVote) {
-                if (userVote.type === voteType) {
-                    // Remove vote if same type
-                    await new Promise((resolve, reject) => {
-                        const deleteRequest = votesStore.delete(userVote.id);
-                        deleteRequest.onsuccess = () => resolve();
-                        deleteRequest.onerror = () => reject(deleteRequest.error);
-                    });
-                    
-                    if (voteType === 'up') {
-                        post.upvotes = Math.max(0, post.upvotes - 1);
-                    } else {
-                        post.downvotes = Math.max(0, post.downvotes - 1);
-                    }
-                } else {
-                    // Change vote type
-                    userVote.type = voteType;
-                    await new Promise((resolve, reject) => {
-                        const updateRequest = votesStore.put(userVote);
-                        updateRequest.onsuccess = () => resolve();
-                        updateRequest.onerror = () => reject(updateRequest.error);
-                    });
-                    
-                    if (voteType === 'up') {
-                        post.upvotes += 1;
-                        post.downvotes = Math.max(0, post.downvotes - 1);
-                    } else {
-                        post.downvotes += 1;
-                        post.upvotes = Math.max(0, post.upvotes - 1);
-                    }
-                }
-            } else {
-                // Add new vote
-                const newVote = {
-                    postId: postId,
-                    userId: user.id,
-                    type: voteType,
-                    timestamp: new Date().toISOString()
-                };
-                
-                await new Promise((resolve, reject) => {
-                    const addRequest = votesStore.add(newVote);
-                    addRequest.onsuccess = () => resolve();
-                    addRequest.onerror = () => reject(addRequest.error);
-                });
-                
-                if (voteType === 'up') {
-                    post.upvotes += 1;
-                } else {
-                    post.downvotes += 1;
-                }
-            }
-            
-            // Update score
-            post.score = post.upvotes - post.downvotes;
-            
-            // Update post in database
-            await new Promise((resolve, reject) => {
-                const updateRequest = postsStore.put(post);
-                updateRequest.onsuccess = () => resolve();
-                updateRequest.onerror = () => reject(updateRequest.error);
-            });
-            
-            await loadData(db, user.id);
+            // The post vote count will be updated via database triggers
+            // and real-time subscriptions will update the UI
             
             // Update rate limiting counters
             setLastVoteTime(Date.now());
@@ -1833,27 +1819,17 @@ const App = () => {
     
     // Handle commenting
     const handleComment = async (postId, content) => {
-        if (!db || !user) return;
-        
-        const newComment = {
-            postId: postId,
-            content: content,
-            author: user.screenName,
-            authorId: user.id,
-            authorColor: user.color,
-            timestamp: new Date().toISOString()
-        };
+        if (!user) return;
         
         try {
-            const transaction = db.transaction(['comments'], 'readwrite');
-            const store = transaction.objectStore('comments');
-            await new Promise((resolve, reject) => {
-                const request = store.add(newComment);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
+            await commentsService.createComment(
+                postId,
+                content,
+                user.screenName,
+                user.color
+            );
             
-            await loadData(db, user.id);
+            // Comments will be updated via real-time subscription
         } catch (error) {
             console.error('Failed to comment:', error);
         }
