@@ -1,5 +1,36 @@
 import { supabase, TABLES, calculateDistance } from './supabaseClient.js'
 
+// Check if Supabase is properly configured
+const isSupabaseConfigured = () => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    return url && key && 
+           !url.includes('YOUR_SUPABASE_URL') && 
+           !url.includes('demo.supabase.co') &&
+           !key.includes('YOUR_SUPABASE_ANON_KEY') &&
+           !key.includes('demo_key');
+};
+
+// Local storage fallback for when Supabase is not configured
+const localStorageKey = 'riprap_local_data';
+
+const getLocalData = () => {
+    try {
+        const data = localStorage.getItem(localStorageKey);
+        return data ? JSON.parse(data) : { posts: [], comments: [], votes: {} };
+    } catch {
+        return { posts: [], comments: [], votes: {} };
+    }
+};
+
+const saveLocalData = (data) => {
+    try {
+        localStorage.setItem(localStorageKey, JSON.stringify(data));
+    } catch (error) {
+        console.warn('Could not save to localStorage:', error);
+    }
+};
+
 // Generate random emoji identifier for comments
 const COMMENT_EMOJIS = ['🐟', '🎣', '🌊', '⭐', '🔥', '💯', '👍', '🎯', '🌟', '💪'];
 
@@ -11,6 +42,19 @@ export const generateEmojiIdentifier = () => {
 export const postsService = {
     // Get posts within radius
     async getNearbyPosts(latitude, longitude, radiusMiles = 5) {
+        if (!isSupabaseConfigured()) {
+            // Use local storage fallback
+            const localData = getLocalData();
+            return localData.posts.filter(post => {
+                if (!post.latitude || !post.longitude) return false;
+                const distance = calculateDistance(latitude, longitude, post.latitude, post.longitude);
+                return distance <= radiusMiles;
+            }).map(post => ({
+                ...post,
+                distance_miles: calculateDistance(latitude, longitude, post.latitude, post.longitude)
+            }));
+        }
+
         try {
             const { data, error } = await supabase.rpc('get_nearby_posts', {
                 user_lat: latitude,
@@ -23,12 +67,42 @@ export const postsService = {
             return data || [];
         } catch (error) {
             console.error('Error fetching nearby posts:', error);
-            return [];
+            // Fallback to local storage if Supabase fails
+            const localData = getLocalData();
+            return localData.posts.filter(post => {
+                if (!post.latitude || !post.longitude) return false;
+                const distance = calculateDistance(latitude, longitude, post.latitude, post.longitude);
+                return distance <= radiusMiles;
+            }).map(post => ({
+                ...post,
+                distance_miles: calculateDistance(latitude, longitude, post.latitude, post.longitude)
+            }));
         }
     },
 
     // Create a new post
     async createPost(content, username, userColor, latitude, longitude, locationName = '') {
+        if (!isSupabaseConfigured()) {
+            // Use local storage fallback
+            const localData = getLocalData();
+            const newPost = {
+                id: crypto.randomUUID(),
+                content,
+                username,
+                user_color: userColor,
+                latitude,
+                longitude,
+                location_name: locationName,
+                vote_count: 0,
+                comment_count: 0,
+                created_at: new Date().toISOString(),
+                distance_miles: 0
+            };
+            localData.posts.unshift(newPost);
+            saveLocalData(localData);
+            return newPost;
+        }
+
         try {
             const { data, error } = await supabase
                 .from(TABLES.POSTS)
@@ -47,7 +121,24 @@ export const postsService = {
             return data;
         } catch (error) {
             console.error('Error creating post:', error);
-            throw error;
+            // Fallback to local storage if Supabase fails
+            const localData = getLocalData();
+            const newPost = {
+                id: crypto.randomUUID(),
+                content,
+                username,
+                user_color: userColor,
+                latitude,
+                longitude,
+                location_name: locationName,
+                vote_count: 0,
+                comment_count: 0,
+                created_at: new Date().toISOString(),
+                distance_miles: 0
+            };
+            localData.posts.unshift(newPost);
+            saveLocalData(localData);
+            return newPost;
         }
     },
 
@@ -73,6 +164,12 @@ export const postsService = {
 export const commentsService = {
     // Get comments for a post
     async getComments(postId) {
+        if (!isSupabaseConfigured()) {
+            const localData = getLocalData();
+            return localData.comments.filter(comment => comment.post_id === postId)
+                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        }
+
         try {
             const { data, error } = await supabase
                 .from(TABLES.COMMENTS)
@@ -84,12 +181,35 @@ export const commentsService = {
             return data || [];
         } catch (error) {
             console.error('Error fetching comments:', error);
-            return [];
+            const localData = getLocalData();
+            return localData.comments.filter(comment => comment.post_id === postId)
+                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         }
     },
 
     // Create a comment
     async createComment(postId, content, username, userColor) {
+        if (!isSupabaseConfigured()) {
+            const localData = getLocalData();
+            const newComment = {
+                id: crypto.randomUUID(),
+                post_id: postId,
+                content,
+                username,
+                user_color: userColor,
+                emoji_identifier: generateEmojiIdentifier(),
+                created_at: new Date().toISOString()
+            };
+            localData.comments.push(newComment);
+            // Update post comment count
+            const post = localData.posts.find(p => p.id === postId);
+            if (post) {
+                post.comment_count = localData.comments.filter(c => c.post_id === postId).length;
+            }
+            saveLocalData(localData);
+            return newComment;
+        }
+
         try {
             const { data, error } = await supabase
                 .from(TABLES.COMMENTS)
@@ -107,7 +227,24 @@ export const commentsService = {
             return data;
         } catch (error) {
             console.error('Error creating comment:', error);
-            throw error;
+            // Fallback to local storage
+            const localData = getLocalData();
+            const newComment = {
+                id: crypto.randomUUID(),
+                post_id: postId,
+                content,
+                username,
+                user_color: userColor,
+                emoji_identifier: generateEmojiIdentifier(),
+                created_at: new Date().toISOString()
+            };
+            localData.comments.push(newComment);
+            const post = localData.posts.find(p => p.id === postId);
+            if (post) {
+                post.comment_count = localData.comments.filter(c => c.post_id === postId).length;
+            }
+            saveLocalData(localData);
+            return newComment;
         }
     }
 };
@@ -116,6 +253,11 @@ export const commentsService = {
 export const votesService = {
     // Get user's vote for a post
     async getUserVote(postId, deviceId) {
+        if (!isSupabaseConfigured()) {
+            const localData = getLocalData();
+            return localData.votes[`${postId}_${deviceId}`] || 0;
+        }
+
         try {
             const { data, error } = await supabase
                 .from(TABLES.VOTES)
@@ -128,12 +270,31 @@ export const votesService = {
             return data?.vote_type || 0;
         } catch (error) {
             console.error('Error fetching user vote:', error);
-            return 0;
+            const localData = getLocalData();
+            return localData.votes[`${postId}_${deviceId}`] || 0;
         }
     },
 
     // Cast a vote (upsert)
     async castVote(postId, deviceId, voteType) {
+        if (!isSupabaseConfigured()) {
+            const localData = getLocalData();
+            if (voteType === 0) {
+                delete localData.votes[`${postId}_${deviceId}`];
+            } else {
+                localData.votes[`${postId}_${deviceId}`] = voteType;
+            }
+            // Update post vote count
+            const post = localData.posts.find(p => p.id === postId);
+            if (post) {
+                post.vote_count = Object.entries(localData.votes)
+                    .filter(([key]) => key.startsWith(`${postId}_`))
+                    .reduce((sum, [, value]) => sum + value, 0);
+            }
+            saveLocalData(localData);
+            return true;
+        }
+
         try {
             if (voteType === 0) {
                 // Remove vote
@@ -162,12 +323,38 @@ export const votesService = {
             return true;
         } catch (error) {
             console.error('Error casting vote:', error);
-            throw error;
+            // Fallback to local storage
+            const localData = getLocalData();
+            if (voteType === 0) {
+                delete localData.votes[`${postId}_${deviceId}`];
+            } else {
+                localData.votes[`${postId}_${deviceId}`] = voteType;
+            }
+            const post = localData.posts.find(p => p.id === postId);
+            if (post) {
+                post.vote_count = Object.entries(localData.votes)
+                    .filter(([key]) => key.startsWith(`${postId}_`))
+                    .reduce((sum, [, value]) => sum + value, 0);
+            }
+            saveLocalData(localData);
+            return true;
         }
     },
 
     // Get votes for multiple posts (for efficiency)
     async getVotesForPosts(postIds, deviceId) {
+        if (!isSupabaseConfigured()) {
+            const localData = getLocalData();
+            const votes = {};
+            postIds.forEach(postId => {
+                const voteKey = `${postId}_${deviceId}`;
+                if (localData.votes[voteKey]) {
+                    votes[postId] = localData.votes[voteKey];
+                }
+            });
+            return votes;
+        }
+
         try {
             const { data, error } = await supabase
                 .from(TABLES.VOTES)
@@ -186,7 +373,15 @@ export const votesService = {
             return votes;
         } catch (error) {
             console.error('Error fetching votes for posts:', error);
-            return {};
+            const localData = getLocalData();
+            const votes = {};
+            postIds.forEach(postId => {
+                const voteKey = `${postId}_${deviceId}`;
+                if (localData.votes[voteKey]) {
+                    votes[postId] = localData.votes[voteKey];
+                }
+            });
+            return votes;
         }
     }
 };
@@ -240,6 +435,14 @@ export const reportsService = {
 export const subscriptionsService = {
     // Subscribe to posts in a specific area
     subscribeToNearbyPosts(latitude, longitude, radiusMiles, onNewPost, onPostUpdate) {
+        if (!isSupabaseConfigured()) {
+            // Return a dummy subscription object for local storage mode
+            return { 
+                unsubscribe: () => {}, 
+                channel: 'local_storage_fallback' 
+            };
+        }
+
         return supabase
             .channel('posts_changes')
             .on('postgres_changes', 
@@ -277,6 +480,13 @@ export const subscriptionsService = {
 
     // Subscribe to comments for a specific post
     subscribeToComments(postId, onNewComment) {
+        if (!isSupabaseConfigured()) {
+            return { 
+                unsubscribe: () => {}, 
+                channel: 'local_storage_fallback' 
+            };
+        }
+
         return supabase
             .channel(`comments_${postId}`)
             .on('postgres_changes',
@@ -295,6 +505,8 @@ export const subscriptionsService = {
 
     // Unsubscribe from a channel
     unsubscribe(subscription) {
-        supabase.removeChannel(subscription);
+        if (subscription && subscription.channel !== 'local_storage_fallback') {
+            supabase.removeChannel(subscription);
+        }
     }
 };
