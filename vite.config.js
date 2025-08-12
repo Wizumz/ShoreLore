@@ -17,7 +17,12 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5173
+    port: 5173,
+    allowedHosts: [
+      'localhost',
+      '.netlify.app',
+      'devserver-feature-supabase-postgis-integration--riprap.netlify.app'
+    ]
   },
   base: './'
 })

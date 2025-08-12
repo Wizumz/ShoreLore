@@ -1942,36 +1942,9 @@ const App = () => {
                 <div className="terminal-header sticky top-0 z-40 p-3 sm:p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <svg width="40" height="40" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="192" height="192" rx="24" fill="#0f766e"/>
-                                <g transform="translate(96, 96)" textAnchor="middle">
-                                    <g transform="translate(-35, -15)">
-                                        <path d="M2 -20 L2 15 M2 -20 L15 -20 Q22 -20 22 -10 Q22 0 15 0 L2 0 M15 0 L22 15" 
-                                              stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <circle cx="30" cy="-25" r="1.5" fill="#ffffff"/>
-                                        <path d="M30 -18 L30 15" stroke="#ffffff" strokeWidth="3" strokeLinecap="round"/>
-                                        <path d="M40 -18 L40 22 M40 -18 L50 -18 Q58 -18 58 -5 Q58 8 50 8 L40 8" 
-                                              stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </g>
-                                    <g transform="translate(10, 15)">
-                                        <path d="M2 -20 L2 15 M2 -20 L15 -20 Q22 -20 22 -10 Q22 0 15 0 L2 0 M15 0 L22 15" 
-                                              stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M30 -5 Q30 -15 38 -15 Q46 -15 46 -5 L46 15 M30 0 L46 0" 
-                                              stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M56 -15 L56 22 M56 -15 L66 -15 Q74 -15 74 -2 Q74 11 66 11 L56 11" 
-                                              stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </g>
-                                    <g opacity="0.7">
-                                        <path d="M-70 45 Q-60 40 -50 45 Q-40 50 -30 45 Q-20 40 -10 45 Q0 50 10 45 Q20 40 30 45 Q40 50 50 45 Q60 40 70 45" 
-                                              stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                                        <g transform="translate(75, -35) scale(0.4)">
-                                            <path d="M0 0 Q15 0 15 15 Q15 30 0 30 Q-15 30 -15 15 Q-15 5 -5 5" 
-                                                  stroke="#ffffff" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                                            <path d="M-5 5 L-10 0" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
-                                        </g>
-                                    </g>
-                                </g>
-                            </svg>
+                            <div className="text-2xl sm:text-3xl font-bold text-white tracking-wider">
+                                RIPRAP
+                            </div>
                             <div className="hidden sm:block">
                                 <div className="text-xs">Share the Shore, Spill the Lore</div>
                             </div>
