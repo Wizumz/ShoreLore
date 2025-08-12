@@ -118,14 +118,14 @@ export async function handler(event, context) {
         }
 
         // Get user data for the response
-        const { data: userData, error: userError } = await supabase
+        const { data: userData, error: userDataError } = await supabase
             .from('users')
             .select('screen_name, color_name, color_value')
             .eq('id', user.id)
             .single();
 
-        if (userError) {
-            console.error('Error fetching user data:', userError);
+        if (userDataError) {
+            console.error('Error fetching user data:', userDataError);
             return createResponse(500, null, 'Database error while fetching user data');
         }
 
