@@ -444,7 +444,7 @@ const getDeviceId = () => {
     return deviceId;
 };
 
-// Database operations now handled by Supabase data service
+// Database operations now handled by localStorage data service
 
 // Generate unique screen name
 const generateScreenName = () => {
@@ -1151,8 +1151,8 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
     const [commentText, setCommentText] = useState('');
     const [isReported, setIsReported] = useState(false);
     
-    const userVote = userVotes.find(vote => vote.postId === post.id);
-    const postComments = comments.filter(comment => comment.postId === post.id);
+    const userVote = userVotes[post.id];
+    const postComments = comments.filter(comment => comment.post_id === post.id);
     
     const handleVote = (voteType) => {
         onVote(post.id, voteType);
@@ -1182,8 +1182,8 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
         return `${Math.floor(diff / 86400)}D`;
     };
     
-    // Hide posts with score <= -5
-    if (post.score <= -5) {
+    // Hide posts with vote_count <= -5
+    if (post.vote_count <= -5) {
         return null;
     }
     
@@ -1192,12 +1192,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center space-x-3">
                                     <div className="w-8 h-8 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
-                    {post.author.charAt(0)}
+                    {post.username.charAt(0)}
                 </div>
                     <div>
                         <div className="flex items-center space-x-2">
-                            <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
-                                {post.author}
+                            <div className="font-bold text-sm" style={{ color: post.user_color?.value || '#1e3a8a' }}>
+                                {post.username}
                             </div>
                         </div>
                         <div className="text-xs terminal-accent">
@@ -1233,7 +1233,7 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
                     <button
                         onClick={() => handleVote('up')}
                         className={`px-2 py-1 text-sm ${
-                            userVote?.type === 'up' 
+                            userVote === 1 
                                 ? 'text-green-600 font-bold' 
                                 : 'text-gray-600 hover:text-green-600'
                         } focus:outline-none`}
@@ -1244,7 +1244,7 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
                     <button
                         onClick={() => handleVote('down')}
                         className={`px-2 py-1 text-sm ${
-                            userVote?.type === 'down' 
+                            userVote === -1 
                                 ? 'text-red-600 font-bold' 
                                 : 'text-gray-600 hover:text-red-600'
                         } focus:outline-none`}
@@ -1253,10 +1253,10 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
                     </button>
                     
                     <div className={`px-2 py-1 text-xs font-bold ${
-                        post.score > 0 ? 'text-green-600' : 
-                        post.score < 0 ? 'text-red-600' : 'text-gray-600'
+                        post.vote_count > 0 ? 'text-green-600' : 
+                        post.vote_count < 0 ? 'text-red-600' : 'text-gray-600'
                     }`}>
-                        {post.score > 0 ? '+' : ''}{post.score}
+                        {post.vote_count > 0 ? '+' : ''}{post.vote_count}
                     </div>
                 </div>
                 
@@ -1274,12 +1274,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
                         <div key={comment.id} className="bg-gray-100 border-2 border-navy-700 p-2">
                             <div className="flex items-center space-x-2 mb-1">
                                 <div className="w-4 h-4 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
-                                    {comment.author.charAt(0)}
+                                    {comment.username.charAt(0)}
                                 </div>
-                                <span className="font-bold text-xs" style={{ color: comment.authorColor?.value || '#1e3a8a' }}>
-                                    {comment.author}
+                                <span className="font-bold text-xs" style={{ color: comment.user_color?.value || '#1e3a8a' }}>
+                                    {comment.username}
                                 </span>
-                                <span className="text-xs terminal-accent">{getTimeAgo(comment.timestamp)}</span>
+                                <span className="text-xs terminal-accent">{getTimeAgo(comment.created_at)}</span>
                             </div>
                             <div className="terminal-text text-xs font-mono pl-6">{comment.content}</div>
                         </div>
@@ -1511,8 +1511,8 @@ const App = () => {
     const calculateUserStats = () => {
         if (!user || !posts || !comments) return;
         
-        const userPosts = posts.filter(post => post.authorId === user.id);
-        const userComments = comments.filter(comment => comment.authorId === user.id);
+        const userPosts = posts.filter(post => post.username === user.screenName);
+        const userComments = comments.filter(comment => comment.username === user.screenName);
         
         setUserStats({ posts: userPosts, comments: userComments });
     };
@@ -1553,7 +1553,7 @@ const App = () => {
 
 
     
-    // Load posts from Supabase
+    // Load posts from localStorage
     const loadPosts = async () => {
         if (!userLocation) return;
         
@@ -1572,6 +1572,14 @@ const App = () => {
             const postIds = sortedPosts.map(post => post.id);
             const votes = await votesService.getVotesForPosts(postIds, deviceId);
             setUserVotes(votes);
+            
+            // Load comments for all posts
+            const allComments = [];
+            for (const post of sortedPosts) {
+                const postComments = await commentsService.getComments(post.id);
+                allComments.push(...postComments);
+            }
+            setComments(allComments);
             
         } catch (error) {
             console.error('Error loading posts:', error);
@@ -1659,13 +1667,13 @@ const App = () => {
                     return post.location.lng > -82 && post.location.lng < -66;
                 })
                 .sort((a, b) => {
-                    const aComments = comments.filter(c => c.postId === a.id).length;
-                    const bComments = comments.filter(c => c.postId === b.id).length;
-                    const aAge = (Date.now() - new Date(a.timestamp)) / (1000 * 60 * 60);
-                    const bAge = (Date.now() - new Date(b.timestamp)) / (1000 * 60 * 60);
+                    const aComments = comments.filter(c => c.post_id === a.id).length;
+                    const bComments = comments.filter(c => c.post_id === b.id).length;
+                    const aAge = (Date.now() - new Date(a.created_at)) / (1000 * 60 * 60);
+                    const bAge = (Date.now() - new Date(b.created_at)) / (1000 * 60 * 60);
                     
-                    const aHotScore = a.score + aComments * 3 - aAge * 0.05; // Slightly different weights for coastwide
-                    const bHotScore = b.score + bComments * 3 - bAge * 0.05;
+                    const aHotScore = a.vote_count + aComments * 3 - aAge * 0.05; // Slightly different weights for coastwide
+                    const bHotScore = b.vote_count + bComments * 3 - bAge * 0.05;
                     
                     return bHotScore - aHotScore;
                 })
@@ -1702,21 +1710,21 @@ const App = () => {
         
         // Sort by criteria
         if (sortBy === 'hot') {
-            // Hot algorithm: score + comment count + recency factor
+            // Hot algorithm: vote_count + comment count + recency factor
             filteredPosts.sort((a, b) => {
-                const aComments = comments.filter(c => c.postId === a.id).length;
-                const bComments = comments.filter(c => c.postId === b.id).length;
-                const aAge = (Date.now() - new Date(a.timestamp)) / (1000 * 60 * 60); // hours
-                const bAge = (Date.now() - new Date(b.timestamp)) / (1000 * 60 * 60); // hours
+                const aComments = comments.filter(c => c.post_id === a.id).length;
+                const bComments = comments.filter(c => c.post_id === b.id).length;
+                const aAge = (Date.now() - new Date(a.created_at)) / (1000 * 60 * 60); // hours
+                const bAge = (Date.now() - new Date(b.created_at)) / (1000 * 60 * 60); // hours
                 
-                const aHotScore = a.score + aComments * 2 - aAge * 0.1;
-                const bHotScore = b.score + bComments * 2 - bAge * 0.1;
+                const aHotScore = a.vote_count + aComments * 2 - aAge * 0.1;
+                const bHotScore = b.vote_count + bComments * 2 - bAge * 0.1;
                 
                 return bHotScore - aHotScore;
             });
         } else {
-            // New: sort by timestamp
-            filteredPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // New: sort by created_at
+            filteredPosts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
         
         // Apply lazy loading limit
@@ -1760,7 +1768,8 @@ const App = () => {
             
             setNewPostContent('');
             setShowPostModal(false);
-            // Posts will be updated via real-time subscription
+            // Reload posts to show the new post
+            await loadPosts();
             
             // Update rate limiting counters
             setLastPostTime(Date.now());
@@ -1791,23 +1800,25 @@ const App = () => {
         
         try {
             const currentVote = userVotes[postId] || 0;
-            const newVote = currentVote === voteType ? 0 : voteType;
             
-            // Convert 'up'/'down' to 1/-1/0 for Supabase
+            // Convert 'up'/'down' to 1/-1/0 for storage
             let voteValue = 0;
-            if (newVote === 'up') voteValue = 1;
-            else if (newVote === 'down') voteValue = -1;
+            if (voteType === 'up') voteValue = 1;
+            else if (voteType === 'down') voteValue = -1;
             
-            await votesService.castVote(postId, deviceId, voteValue);
+            // Toggle vote if same type, otherwise set to new type
+            const newVoteValue = currentVote === voteValue ? 0 : voteValue;
+            
+            await votesService.castVote(postId, deviceId, newVoteValue);
             
             // Update local state
             setUserVotes(prev => ({
                 ...prev,
-                [postId]: newVote
+                [postId]: newVoteValue
             }));
             
-            // The post vote count will be updated via database triggers
-            // and real-time subscriptions will update the UI
+            // Reload posts to reflect updated vote counts
+            await loadPosts();
             
             // Update rate limiting counters
             setLastVoteTime(Date.now());
@@ -1829,7 +1840,13 @@ const App = () => {
                 user.color
             );
             
-            // Comments will be updated via real-time subscription
+            // Reload comments to show the new comment
+            const allComments = [];
+            for (const post of posts) {
+                const postComments = await commentsService.getComments(post.id);
+                allComments.push(...postComments);
+            }
+            setComments(allComments);
         } catch (error) {
             console.error('Failed to comment:', error);
         }
