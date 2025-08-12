@@ -131,17 +131,35 @@ export async function handler(event, context) {
     }
 }
 
-function extractCoordinates(postgisPoint) {
-    if (!postgisPoint) return null;
-    const matches = postgisPoint.match(/POINT\(([^)]+)\)/);
-    if (matches) {
-        const coords = matches[1].split(' ');
-        if (coords.length === 2) {
-            return {
-                lat: parseFloat(coords[1]),
-                lng: parseFloat(coords[0])
-            };
+function extractCoordinates(postgisLocation) {
+    if (!postgisLocation) return null;
+    
+    // Handle different PostGIS geography return formats
+    if (typeof postgisLocation === 'string') {
+        // String format: "POINT(lng lat)"
+        const matches = postgisLocation.match(/POINT\(([^)]+)\)/);
+        if (matches) {
+            const coords = matches[1].split(' ');
+            if (coords.length === 2) {
+                return {
+                    lat: parseFloat(coords[1]),
+                    lng: parseFloat(coords[0])
+                };
+            }
         }
+    } else if (postgisLocation.coordinates) {
+        // GeoJSON format
+        return {
+            lat: postgisLocation.coordinates[1],
+            lng: postgisLocation.coordinates[0]
+        };
+    } else if (postgisLocation.lat && postgisLocation.lng) {
+        // Already formatted object
+        return {
+            lat: postgisLocation.lat,
+            lng: postgisLocation.lng
+        };
     }
+    
     return null;
 }

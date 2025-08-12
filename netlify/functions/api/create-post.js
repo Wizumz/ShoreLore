@@ -69,50 +69,74 @@ export async function handler(event, context) {
             return createResponse(500, null, 'Database error while finding user');
         }
 
-        // Prepare post data
-        const postData = {
-            user_id: user.id,
-            content: content.trim(),
-            nearest_city: nearest_city || null
-        };
-
-        // Add location if coordinates provided
+        // Create the post with proper PostGIS location handling
+        let newPost, postError;
+        
         if (lat && lng) {
-            // Use ST_Point to create PostGIS point geometry
-            postData.location = `POINT(${lng} ${lat})`;
+            // Use stored procedure for posts with location to ensure proper PostGIS usage
+            const { data, error } = await supabase
+                .rpc('create_post_with_location', {
+                    p_user_id: user.id,
+                    p_content: content.trim(),
+                    p_lng: lng,
+                    p_lat: lat,
+                    p_nearest_city: nearest_city || null
+                });
+            
+            newPost = data?.[0];
+            postError = error;
+        } else {
+            // For posts without location, use regular insert
+            const { data, error } = await supabase
+                .from('posts')
+                .insert({
+                    user_id: user.id,
+                    content: content.trim(),
+                    nearest_city: nearest_city || null
+                })
+                .select(`
+                    id,
+                    content,
+                    location,
+                    nearest_city,
+                    upvotes,
+                    downvotes,
+                    vote_score,
+                    created_at,
+                    updated_at,
+                    user_id
+                `)
+                .single();
+            
+            newPost = data;
+            postError = error;
         }
-
-        // Create the post
-        const { data: newPost, error: postError } = await supabase
-            .from('posts')
-            .insert(postData)
-            .select(`
-                id,
-                content,
-                location,
-                nearest_city,
-                upvotes,
-                downvotes,
-                vote_score,
-                created_at,
-                updated_at,
-                user:users(screen_name, color_name, color_value)
-            `)
-            .single();
 
         if (postError) {
             console.error('Error creating post:', postError);
             return createResponse(500, null, 'Database error while creating post');
         }
 
+        // Get user data for the response
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('screen_name, color_name, color_value')
+            .eq('id', user.id)
+            .single();
+
+        if (userError) {
+            console.error('Error fetching user data:', userError);
+            return createResponse(500, null, 'Database error while fetching user data');
+        }
+
         // Format response data
         const responseData = {
             id: newPost.id,
             content: newPost.content,
-            author: newPost.user.screen_name,
+            author: userData.screen_name,
             author_color: {
-                name: newPost.user.color_name,
-                value: newPost.user.color_value
+                name: userData.color_name,
+                value: userData.color_value
             },
             location: {
                 lat: lat || null,
