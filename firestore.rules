@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isValidUser(userId) {
+      return isAuthenticated() && userId == resource.data.deviceId;
+    }
+    
+    function isValidContent(content) {
+      return content is string && content.size() > 0 && content.size() <= 200;
+    }
+    
+    function isRecentTimestamp(timestamp) {
+      return timestamp > request.time - duration.value(5, 'm'); // 5 minutes ago
+    }
+    
+    // Users collection - device-based anonymous users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() 
+        && userId == request.auth.uid + "_" + request.resource.data.deviceId
+        && request.resource.data.firebaseUid == request.auth.uid
+        && request.resource.data.deviceId is string
+        && request.resource.data.screenName is string
+        && request.resource.data.color is map;
+      allow update: if isAuthenticated() 
+        && userId == resource.data.deviceId
+        && request.resource.data.firebaseUid == resource.data.firebaseUid // Prevent changing Firebase UID
+        && request.resource.data.deviceId == resource.data.deviceId; // Prevent changing device ID
+    }
+    
+    // Posts collection
+    match /posts/{postId} {
+      allow read: if true; // Posts are public, but we filter by location client-side
+      allow create: if isAuthenticated()
+        && isValidContent(request.resource.data.content)
+        && request.resource.data.authorId is string
+        && request.resource.data.authorName is string
+        && request.resource.data.authorColor is map
+        && request.resource.data.upvotes == 0
+        && request.resource.data.downvotes == 0
+        && request.resource.data.score == 0
+        && request.resource.data.commentsCount == 0
+        && request.resource.data.reportsCount == 0;
+      allow update: if false; // Posts are immutable once created (except via votes/comments functions)
+    }
+    
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if true; // Comments are public
+      allow create: if isAuthenticated()
+        && isValidContent(request.resource.data.content)
+        && request.resource.data.postId is string
+        && request.resource.data.authorId is string
+        && request.resource.data.authorName is string
+        && request.resource.data.authorColor is map;
+      allow update, delete: if false; // Comments are immutable
+    }
+    
+    // Votes collection
+    match /votes/{voteId} {
+      allow read: if isAuthenticated(); // Users can read votes to see their own voting history
+      allow write: if isAuthenticated()
+        && voteId.matches('.*_.*') // Must follow userId_postId pattern
+        && request.resource.data.userId is string
+        && request.resource.data.postId is string
+        && request.resource.data.type in ['upvote', 'downvote'];
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      allow read: if false; // Only admins should read reports (handled server-side)
+      allow create: if isAuthenticated()
+        && request.resource.data.postId is string
+        && request.resource.data.userId is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500;
+      allow update, delete: if false; // Reports are immutable
+    }
+    
+    // Additional collections for future features
+    match /notifications/{notificationId} {
+      allow read, write: if false; // Reserved for future use
+    }
+    
+    match /analytics/{analyticsId} {
+      allow read, write: if false; // Reserved for future use
+    }
+  }
+}
