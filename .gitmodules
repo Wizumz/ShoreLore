@@ -1,0 +1,4 @@
+[submodule "RipRap"]
+	path = RipRap
+	url = https://github.com/Wizumz/RipRap.git
+	branch = main
