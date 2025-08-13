@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import firebaseService, { userService } from './lib/firebaseService.js';
 
 // Northeast Striped Bass Fishing Locations
 const STRIPED_BASS_LOCATIONS = {
@@ -495,28 +496,37 @@ const USERNAME_COLORS = [
     { name: 'Indigo', value: '#4338ca', textClass: 'text-indigo-600' }
 ];
 
-// Get or create user identity
-const getUserIdentity = (customUsername = null, selectedColor = null) => {
-    let user = localStorage.getItem('riprap_user');
-    if (!user || customUsername) {
+// Get or create user identity using Firebase
+const getUserIdentity = async (customUsername = null, selectedColor = null) => {
+    try {
         const defaultColor = USERNAME_COLORS[0]; // Navy as default
-        user = {
-            id: crypto.randomUUID(),
-            screenName: customUsername || generateScreenName(),
-            color: selectedColor || defaultColor,
-            hasChangedName: !!customUsername,
-            createdAt: new Date().toISOString()
-        };
+        const user = await userService.getOrCreateUser(
+            customUsername || null, 
+            selectedColor || defaultColor
+        );
+        
+        // Store in localStorage for quick access (Firebase handles persistence)
         localStorage.setItem('riprap_user', JSON.stringify(user));
-    } else {
-        user = JSON.parse(user);
-        // Ensure color exists for existing users
-        if (!user.color) {
-            user.color = USERNAME_COLORS[0];
+        return user;
+    } catch (error) {
+        console.error('Failed to get user identity:', error);
+        // Fallback to local-only mode (existing behavior)
+        let user = localStorage.getItem('riprap_user');
+        if (!user || customUsername) {
+            const defaultColor = USERNAME_COLORS[0];
+            user = {
+                id: crypto.randomUUID(),
+                screenName: customUsername || generateScreenName(),
+                color: selectedColor || defaultColor,
+                hasChangedName: !!customUsername,
+                createdAt: new Date().toISOString()
+            };
             localStorage.setItem('riprap_user', JSON.stringify(user));
+        } else {
+            user = JSON.parse(user);
         }
+        return user;
     }
-    return user;
 };
 
 // Location settings persistence
@@ -1376,12 +1386,24 @@ const App = () => {
     
     // Check if user needs to set up username and load location settings
     useEffect(() => {
-        const userData = localStorage.getItem('riprap_user');
-        if (!userData) {
-            setShowUsernameSetup(true);
-        } else {
-            setUser(JSON.parse(userData));
-        }
+        const initializeUser = async () => {
+            // Try to get existing user from localStorage first (for quick startup)
+            const userData = localStorage.getItem('riprap_user');
+            if (!userData) {
+                setShowUsernameSetup(true);
+            } else {
+                // Try to load user from Firebase, fallback to localStorage
+                try {
+                    const firebaseUser = await getUserIdentity();
+                    setUser(firebaseUser);
+                } catch (error) {
+                    console.warn('Failed to load user from Firebase, using localStorage:', error);
+                    setUser(JSON.parse(userData));
+                }
+            }
+        };
+        
+        initializeUser();
         
         // Load saved location settings
         const locationSettings = loadLocationSettings();
@@ -1397,14 +1419,11 @@ const App = () => {
         if (!user) return;
         
         const initApp = async () => {
-            // Initialize database
+            // Initialize Firebase and load data
             try {
-                const database = await initDB();
-                setDb(database);
-                await loadData(database, user.id);
-                
+                await loadData(user.id);
             } catch (error) {
-                console.error('Failed to initialize database:', error);
+                console.error('Failed to initialize Firebase data:', error);
             }
             
             // Get user location - only use GPS if no saved custom location
@@ -1505,10 +1524,14 @@ const App = () => {
     }, [sortBy]);
     
     // Handle username setup
-    const handleUsernameSet = (username, color) => {
-        const userData = getUserIdentity(username, color);
-        setUser(userData);
-        setShowUsernameSetup(false);
+    const handleUsernameSet = async (username, color) => {
+        try {
+            const userData = await getUserIdentity(username, color);
+            setUser(userData);
+            setShowUsernameSetup(false);
+        } catch (error) {
+            console.error('Failed to set username:', error);
+        }
     };
 
 
@@ -1559,37 +1582,42 @@ const App = () => {
 
 
     
-    // Load data from IndexedDB
-    const loadData = async (database, userId) => {
+    // Load data from Firebase
+    const loadData = async (userId) => {
         try {
-            const transaction = database.transaction(['posts', 'comments', 'votes'], 'readonly');
+            // Load posts based on user location and radius
+            const radius = locationRadius * 1.609344; // Convert miles to kilometers
+            const postsResult = await firebaseService.getPosts(userLocation, radius, loadedPostsCount, sortBy);
             
-            // Load posts
-            const postsRequest = transaction.objectStore('posts').getAll();
-            const postsResult = await new Promise((resolve, reject) => {
-                postsRequest.onsuccess = () => resolve(postsRequest.result);
-                postsRequest.onerror = () => reject(postsRequest.error);
-            });
+            // Load user votes for these posts
+            const postIds = postsResult.map(post => post.id);
+            const votesResult = await firebaseService.getUserVotes(userId, postIds);
             
-            // Load comments
-            const commentsRequest = transaction.objectStore('comments').getAll();
-            const commentsResult = await new Promise((resolve, reject) => {
-                commentsRequest.onsuccess = () => resolve(commentsRequest.result);
-                commentsRequest.onerror = () => reject(commentsRequest.error);
-            });
+            // Convert votes to array format (maintaining compatibility)
+            const votesArray = Object.entries(votesResult).map(([postId, voteType]) => ({
+                postId,
+                userId,
+                type: voteType
+            }));
             
-            // Load user votes
-            const votesRequest = transaction.objectStore('votes').index('userId').getAll(userId);
-            const votesResult = await new Promise((resolve, reject) => {
-                votesRequest.onsuccess = () => resolve(votesRequest.result);
-                votesRequest.onerror = () => reject(votesRequest.error);
-            });
+            // Load all comments for visible posts
+            const allComments = [];
+            for (const post of postsResult) {
+                if (post.commentsCount > 0) {
+                    const postComments = await firebaseService.getComments(post.id);
+                    allComments.push(...postComments);
+                }
+            }
             
             setPosts(postsResult || []);
-            setComments(commentsResult || []);
-            setUserVotes(votesResult || []);
+            setComments(allComments || []);
+            setUserVotes(votesArray || []);
         } catch (error) {
             console.error('Failed to load data:', error);
+            // Fallback to empty arrays if Firebase fails
+            setPosts([]);
+            setComments([]);
+            setUserVotes([]);
         }
     };
     
@@ -1682,9 +1710,9 @@ const App = () => {
         return filteredPosts.slice(0, loadedPostsCount);
     };
     
-    // Create new post
+    // Create new post using Firebase
     const handleCreatePost = async () => {
-        if (!newPostContent.trim() || !db || !user || !userLocation) return;
+        if (!newPostContent.trim() || !user || !userLocation) return;
         
         // Rate limiting check
         const rateLimitCheck = checkRateLimit(
@@ -1707,33 +1735,15 @@ const App = () => {
             return;
         }
         
-        const newPost = {
-            content: newPostContent.trim(),
-            author: user.screenName,
-            authorId: user.id,
-            authorColor: user.color,
-            timestamp: new Date().toISOString(),
-            upvotes: 0,
-            downvotes: 0,
-            score: 0,
-            location: {
-                lat: userLocation.lat,
-                lng: userLocation.lng,
-                distance: 0,
-                nearestCity: getNearestCityState(userLocation.lat, userLocation.lng)
-            }
+        const locationData = {
+            lat: userLocation.lat,
+            lng: userLocation.lng,
+            nearestCity: getNearestCityState(userLocation.lat, userLocation.lng)
         };
         
         try {
-            const transaction = db.transaction(['posts'], 'readwrite');
-            const store = transaction.objectStore('posts');
-            await new Promise((resolve, reject) => {
-                const request = store.add(newPost);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-            
-            await loadData(db, user.id);
+            await firebaseService.createPost(newPostContent.trim(), locationData, user);
+            await loadData(user.id);
             setNewPostContent('');
             
             // Update rate limiting counters
@@ -1744,9 +1754,9 @@ const App = () => {
         }
     };
     
-    // Handle voting
+    // Handle voting using Firebase
     const handleVote = async (postId, voteType) => {
-        if (!db || !user) return;
+        if (!user) return;
         
         // Rate limiting check
         const rateLimitCheck = checkRateLimit(
@@ -1763,90 +1773,10 @@ const App = () => {
         }
         
         try {
-            const transaction = db.transaction(['posts', 'votes'], 'readwrite');
-            const postsStore = transaction.objectStore('posts');
-            const votesStore = transaction.objectStore('votes');
-            
-            // Get current post
-            const postRequest = postsStore.get(postId);
-            const post = await new Promise((resolve, reject) => {
-                postRequest.onsuccess = () => resolve(postRequest.result);
-                postRequest.onerror = () => reject(postRequest.error);
-            });
-            
-            // Check for existing vote
-            const existingVoteRequest = votesStore.index('postId').getAll(postId);
-            const existingVotes = await new Promise((resolve, reject) => {
-                existingVoteRequest.onsuccess = () => resolve(existingVoteRequest.result);
-                existingVoteRequest.onerror = () => reject(existingVoteRequest.error);
-            });
-            
-            const userVote = existingVotes.find(vote => vote.userId === user.id);
-            
-            if (userVote) {
-                if (userVote.type === voteType) {
-                    // Remove vote if same type
-                    await new Promise((resolve, reject) => {
-                        const deleteRequest = votesStore.delete(userVote.id);
-                        deleteRequest.onsuccess = () => resolve();
-                        deleteRequest.onerror = () => reject(deleteRequest.error);
-                    });
-                    
-                    if (voteType === 'up') {
-                        post.upvotes = Math.max(0, post.upvotes - 1);
-                    } else {
-                        post.downvotes = Math.max(0, post.downvotes - 1);
-                    }
-                } else {
-                    // Change vote type
-                    userVote.type = voteType;
-                    await new Promise((resolve, reject) => {
-                        const updateRequest = votesStore.put(userVote);
-                        updateRequest.onsuccess = () => resolve();
-                        updateRequest.onerror = () => reject(updateRequest.error);
-                    });
-                    
-                    if (voteType === 'up') {
-                        post.upvotes += 1;
-                        post.downvotes = Math.max(0, post.downvotes - 1);
-                    } else {
-                        post.downvotes += 1;
-                        post.upvotes = Math.max(0, post.upvotes - 1);
-                    }
-                }
-            } else {
-                // Add new vote
-                const newVote = {
-                    postId: postId,
-                    userId: user.id,
-                    type: voteType,
-                    timestamp: new Date().toISOString()
-                };
-                
-                await new Promise((resolve, reject) => {
-                    const addRequest = votesStore.add(newVote);
-                    addRequest.onsuccess = () => resolve();
-                    addRequest.onerror = () => reject(addRequest.error);
-                });
-                
-                if (voteType === 'up') {
-                    post.upvotes += 1;
-                } else {
-                    post.downvotes += 1;
-                }
-            }
-            
-            // Update score
-            post.score = post.upvotes - post.downvotes;
-            
-            // Update post in database
-            await new Promise((resolve, reject) => {
-                const updateRequest = postsStore.put(post);
-                updateRequest.onsuccess = () => resolve();
-                updateRequest.onerror = () => reject(updateRequest.error);
-            });
-            
-            await loadData(db, user.id);
+            // Convert vote type to match Firebase service
+            const firebaseVoteType = voteType === 'up' ? 'upvote' : 'downvote';
+            await firebaseService.castVote(postId, user.id, firebaseVoteType);
+            await loadData(user.id);
             
             // Update rate limiting counters
             setLastVoteTime(Date.now());
@@ -1856,29 +1786,13 @@ const App = () => {
         }
     };
     
-    // Handle commenting
+    // Handle commenting using Firebase
     const handleComment = async (postId, content) => {
-        if (!db || !user) return;
-        
-        const newComment = {
-            postId: postId,
-            content: content,
-            author: user.screenName,
-            authorId: user.id,
-            authorColor: user.color,
-            timestamp: new Date().toISOString()
-        };
+        if (!user) return;
         
         try {
-            const transaction = db.transaction(['comments'], 'readwrite');
-            const store = transaction.objectStore('comments');
-            await new Promise((resolve, reject) => {
-                const request = store.add(newComment);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-            
-            await loadData(db, user.id);
+            await firebaseService.createComment(postId, content, user);
+            await loadData(user.id);
         } catch (error) {
             console.error('Failed to comment:', error);
         }
