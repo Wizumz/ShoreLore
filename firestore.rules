@@ -15,21 +15,51 @@ service cloud.firestore {
       return content is string && content.size() > 0 && content.size() <= 200;
     }
     
-    function isRecentTimestamp(timestamp) {
-      return timestamp > request.time - duration.value(5, 'm'); // 5 minutes ago
+    // Enhanced timestamp validation with proper type checking
+    function isRecentTimestamp(ts) {
+      return ts is timestamp && ts > request.time - duration.value(5, 'm');
+    }
+    
+    // Validate user ID format: should be "uid_deviceId"
+    function isValidUserIdFormat(userId, firebaseUid) {
+      return userId is string && 
+             userId.size() > 0 && 
+             userId.size() <= 100 &&
+             userId.matches(firebaseUid + '_.*');
+    }
+    
+    // Validate required user fields
+    function hasValidUserFields(data) {
+      return data.keys().hasAll(['deviceId', 'firebaseUid', 'screenName', 'color', 'createdAt']) &&
+             data.deviceId is string &&
+             data.firebaseUid is string &&
+             data.screenName is string &&
+             data.color is map &&
+             data.color.keys().hasAll(['name', 'value']);
+    }
+    
+    // Validate required post fields
+    function hasValidPostFields(data) {
+      return data.keys().hasAll(['content', 'authorId', 'author', 'authorColor', 'location', 'createdAt']) &&
+             data.content is string &&
+             data.authorId is string &&
+             data.author is string &&
+             data.authorColor is map &&
+             data.location is map &&
+             data.location.keys().hasAll(['lat', 'lng', 'nearestCity']);
     }
     
     // Users collection - device-based anonymous users
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() 
+        && isValidUserIdFormat(userId, request.auth.uid)
         && userId == request.auth.uid + "_" + request.resource.data.deviceId
         && request.resource.data.firebaseUid == request.auth.uid
-        && request.resource.data.deviceId is string
-        && request.resource.data.screenName is string
-        && request.resource.data.color is map;
+        && hasValidUserFields(request.resource.data)
+        && isRecentTimestamp(request.resource.data.createdAt);
       allow update: if isAuthenticated() 
-        && userId == resource.data.deviceId
+        && userId == request.auth.uid + "_" + resource.data.deviceId
         && request.resource.data.firebaseUid == resource.data.firebaseUid // Prevent changing Firebase UID
         && request.resource.data.deviceId == resource.data.deviceId; // Prevent changing device ID
     }
@@ -39,9 +69,8 @@ service cloud.firestore {
       allow read: if true; // Posts are public, but we filter by location client-side
       allow create: if isAuthenticated()
         && isValidContent(request.resource.data.content)
-        && request.resource.data.authorId is string
-        && request.resource.data.authorName is string
-        && request.resource.data.authorColor is map
+        && hasValidPostFields(request.resource.data)
+        && isRecentTimestamp(request.resource.data.createdAt)
         && request.resource.data.upvotes == 0
         && request.resource.data.downvotes == 0
         && request.resource.data.score == 0
@@ -55,9 +84,10 @@ service cloud.firestore {
       allow read: if true; // Comments are public
       allow create: if isAuthenticated()
         && isValidContent(request.resource.data.content)
+        && isRecentTimestamp(request.resource.data.createdAt)
         && request.resource.data.postId is string
         && request.resource.data.authorId is string
-        && request.resource.data.authorName is string
+        && request.resource.data.author is string
         && request.resource.data.authorColor is map;
       allow update, delete: if false; // Comments are immutable
     }
@@ -69,7 +99,8 @@ service cloud.firestore {
         && voteId.matches('.*_.*') // Must follow userId_postId pattern
         && request.resource.data.userId is string
         && request.resource.data.postId is string
-        && request.resource.data.type in ['upvote', 'downvote'];
+        && request.resource.data.type in ['upvote', 'downvote']
+        && isRecentTimestamp(request.resource.data.createdAt);
     }
     
     // Reports collection
@@ -80,17 +111,9 @@ service cloud.firestore {
         && request.resource.data.userId is string
         && request.resource.data.reason is string
         && request.resource.data.reason.size() > 0
-        && request.resource.data.reason.size() <= 500;
+        && request.resource.data.reason.size() <= 500
+        && isRecentTimestamp(request.resource.data.createdAt);
       allow update, delete: if false; // Reports are immutable
-    }
-    
-    // Additional collections for future features
-    match /notifications/{notificationId} {
-      allow read, write: if false; // Reserved for future use
-    }
-    
-    match /analytics/{analyticsId} {
-      allow read, write: if false; // Reserved for future use
     }
   }
 }

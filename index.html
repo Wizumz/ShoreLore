@@ -174,11 +174,14 @@
             });
         }
 
-        // Firebase Connection Test (Development Only)
+        // Firebase Development Testing (Development Only)
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log('🔥 Firebase Development Testing Available');
-            console.log('Run this in console to test Firebase connection:');
-            console.log('import("./firebase-test.js").then(m => m.default())');
+            console.log('');
+            console.log('📋 Available Tests:');
+            console.log('1. CRUD Operations: import("./src/lib/firebaseCrudExample.js").then(m => m.runQuickDemo())');
+            console.log('2. Security Rules: import("./firebase-rules-test.js").then(m => new m.default().runAllTests())');
+            console.log('');
         }
     </script>
 </body>
