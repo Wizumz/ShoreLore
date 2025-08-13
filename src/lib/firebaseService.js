@@ -95,13 +95,14 @@ export const userService = {
       // Ensure anonymous authentication
       const firebaseUser = await getAnonymousUser();
       const deviceId = generateDeviceId();
+      const userId = `${firebaseUser.uid}_${deviceId}`;
       
       // Check if user profile exists in Firestore
-      const userRef = doc(db, 'users', deviceId);
+      const userRef = doc(db, 'users', userId);
       const userDoc = await getDoc(userRef);
       
       if (userDoc.exists()) {
-        return { id: deviceId, ...userDoc.data() };
+        return { id: userId, ...userDoc.data() };
       }
       
       // Create new user profile
@@ -118,7 +119,7 @@ export const userService = {
       };
       
       await setDoc(userRef, userData);
-      return { id: deviceId, ...userData };
+      return { id: userId, ...userData };
     } catch (error) {
       console.error('Error getting/creating user:', error);
       throw error;

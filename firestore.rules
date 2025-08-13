@@ -40,13 +40,13 @@ service cloud.firestore {
     
     // Validate required post fields
     function hasValidPostFields(data) {
-      return data.keys().hasAll(['content', 'authorId', 'author', 'authorColor', 'location', 'createdAt']) &&
+      return data.keys().hasAll(['content', 'authorId', 'authorName', 'authorColor', 'createdAt']) &&
              data.content is string &&
              data.authorId is string &&
-             data.author is string &&
+             data.authorName is string &&
              data.authorColor is map &&
-             data.location is map &&
-             data.location.keys().hasAll(['lat', 'lng', 'nearestCity']);
+             (data.location == null || data.location is latlng) &&
+             (data.nearestCity == null || data.nearestCity is string);
     }
     
     // Users collection - device-based anonymous users
@@ -87,7 +87,7 @@ service cloud.firestore {
         && isRecentTimestamp(request.resource.data.createdAt)
         && request.resource.data.postId is string
         && request.resource.data.authorId is string
-        && request.resource.data.author is string
+        && request.resource.data.authorName is string
         && request.resource.data.authorColor is map;
       allow update, delete: if false; // Comments are immutable
     }

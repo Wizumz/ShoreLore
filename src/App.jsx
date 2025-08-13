@@ -1,6 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
 import firebaseService, { userService } from './lib/firebaseService.js';
 
+// Error Boundary Component to catch React errors
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        // Update state so the next render will show the fallback UI
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        // Log the error to console for debugging
+        console.error('React Error Boundary caught an error:', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            // Fallback UI when there's an error
+            return (
+                <div className="min-h-screen bg-navy-900 flex items-center justify-center p-4">
+                    <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div className="text-red-600 text-6xl mb-4">⚠️</div>
+                        <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+                        <p className="text-gray-600 mb-4">
+                            The app encountered an error and needs to restart.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="bg-navy-600 text-white px-4 py-2 rounded hover:bg-navy-700 transition-colors"
+                        >
+                            Restart App
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
 // Northeast Striped Bass Fishing Locations
 const STRIPED_BASS_LOCATIONS = {
     'montauk-point-ny': { lat: 41.0362, lng: -71.8562, name: 'Montauk Point, NY', state: 'NY' },
@@ -1386,32 +1429,59 @@ const App = () => {
     
     // Check if user needs to set up username and load location settings
     useEffect(() => {
+        let isMounted = true; // Track if component is still mounted
+        
         const initializeUser = async () => {
-            // Try to get existing user from localStorage first (for quick startup)
-            const userData = localStorage.getItem('riprap_user');
-            if (!userData) {
-                setShowUsernameSetup(true);
-            } else {
-                // Try to load user from Firebase, fallback to localStorage
-                try {
-                    const firebaseUser = await getUserIdentity();
-                    setUser(firebaseUser);
-                } catch (error) {
-                    console.warn('Failed to load user from Firebase, using localStorage:', error);
-                    setUser(JSON.parse(userData));
+            try {
+                // Try to get existing user from localStorage first (for quick startup)
+                const userData = localStorage.getItem('riprap_user');
+                if (!userData) {
+                    if (isMounted) setShowUsernameSetup(true);
+                } else {
+                    // Try to load user from Firebase, fallback to localStorage
+                    try {
+                        const firebaseUser = await getUserIdentity();
+                        if (isMounted) setUser(firebaseUser);
+                    } catch (error) {
+                        console.warn('Failed to load user from Firebase, using localStorage:', error);
+                        try {
+                            const localUser = JSON.parse(userData);
+                            if (isMounted) setUser(localUser);
+                        } catch (parseError) {
+                            console.error('Failed to parse localStorage user data:', parseError);
+                            if (isMounted) {
+                                localStorage.removeItem('riprap_user');
+                                setShowUsernameSetup(true);
+                            }
+                        }
+                    }
                 }
+            } catch (error) {
+                console.error('Failed to initialize user:', error);
+                if (isMounted) setShowUsernameSetup(true);
             }
         };
         
         initializeUser();
         
         // Load saved location settings
-        const locationSettings = loadLocationSettings();
-        setLocationRadius(locationSettings.locationRadius);
-        if (locationSettings.customLocation) {
-            setCustomLocation(locationSettings.customLocation);
-            setCurrentLocationName(locationSettings.customLocation.name);
+        try {
+            const locationSettings = loadLocationSettings();
+            if (isMounted) {
+                setLocationRadius(locationSettings.locationRadius);
+                if (locationSettings.customLocation) {
+                    setCustomLocation(locationSettings.customLocation);
+                    setCurrentLocationName(locationSettings.customLocation.name);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load location settings:', error);
         }
+        
+        // Cleanup function to prevent state updates after unmount
+        return () => {
+            isMounted = false;
+        };
     }, []);
     
     // Initialize app
@@ -1419,50 +1489,75 @@ const App = () => {
         if (!user) return;
         
         const initApp = async () => {
-            // Initialize Firebase and load data
             try {
-                await loadData(user.id);
-            } catch (error) {
-                console.error('Failed to initialize Firebase data:', error);
-            }
-            
-            // Get user location - only use GPS if no saved custom location
-            const savedSettings = loadLocationSettings();
-            if (savedSettings.customLocation) {
-                // Use saved custom location
-                setUserLocation(savedSettings.customLocation);
-                setCurrentLocationName(savedSettings.customLocation.name);
-                console.log('Using saved custom location:', savedSettings.customLocation);
-            } else {
-                // No saved location, try GPS
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
+                // Get user location first before loading data
+                const savedSettings = loadLocationSettings();
+                let effectiveLocation = null;
+                
+                if (savedSettings.customLocation) {
+                    // Use saved custom location
+                    effectiveLocation = savedSettings.customLocation;
+                    setUserLocation(savedSettings.customLocation);
+                    setCurrentLocationName(savedSettings.customLocation.name);
+                    console.log('Using saved custom location:', savedSettings.customLocation);
+                } else {
+                    // No saved location, try GPS
+                    if (navigator.geolocation) {
+                        try {
+                            const position = await new Promise((resolve, reject) => {
+                                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                                    enableHighAccuracy: true,
+                                    timeout: 10000,
+                                    maximumAge: 300000 // 5 minutes cache
+                                });
+                            });
+                            
                             const lat = position.coords.latitude;
                             const lng = position.coords.longitude;
+                            effectiveLocation = { lat, lng };
                             setUserLocation({ lat, lng });
                             setCurrentLocationName(getApproximateLocation(lat, lng));
                             console.log('GPS location acquired:', { lat, lng });
-                        },
-                        (error) => {
+                        } catch (error) {
                             console.error('GPS location failed:', error.message);
                             // Fallback to a default location (Cape Cod) if GPS fails
                             const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
+                            effectiveLocation = fallbackLocation;
                             setUserLocation(fallbackLocation);
                             setCurrentLocationName(`${fallbackLocation.name} (Default)`);
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 300000 // 5 minutes cache
                         }
-                    );
+                    } else {
+                        console.warn('Geolocation not supported');
+                        // Fallback to a default location
+                        const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
+                        effectiveLocation = fallbackLocation;
+                        setUserLocation(fallbackLocation);
+                        setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                    }
+                }
+
+                // Now load data with the determined location
+                if (effectiveLocation) {
+                    await loadData(user.id, effectiveLocation);
                 } else {
-                    console.warn('Geolocation not supported');
-                    // Fallback to a default location
-                    const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
-                    setUserLocation(fallbackLocation);
-                    setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                    console.warn('No location available, loading data without location filter');
+                    await loadData(user.id, null);
+                }
+                
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                // Set fallback location and try to load data anyway
+                const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
+                setUserLocation(fallbackLocation);
+                setCurrentLocationName(`${fallbackLocation.name} (Default)`);
+                try {
+                    await loadData(user.id, fallbackLocation);
+                } catch (dataError) {
+                    console.error('Failed to load data with fallback location:', dataError);
+                    // Set empty data to prevent further errors
+                    setPosts([]);
+                    setComments([]);
+                    setUserVotes([]);
                 }
             }
         };
@@ -1583,11 +1678,14 @@ const App = () => {
 
     
     // Load data from Firebase
-    const loadData = async (userId) => {
+    const loadData = async (userId, location = null) => {
         try {
+            // Use the provided location parameter or fall back to userLocation state
+            const effectiveLocation = location || userLocation;
+            
             // Load posts based on user location and radius
             const radius = locationRadius * 1.609344; // Convert miles to kilometers
-            const postsResult = await firebaseService.getPosts(userLocation, radius, loadedPostsCount, sortBy);
+            const postsResult = await firebaseService.getPosts(effectiveLocation, radius, loadedPostsCount, sortBy);
             
             // Load user votes for these posts
             const postIds = postsResult.map(post => post.id);
@@ -1604,8 +1702,13 @@ const App = () => {
             const allComments = [];
             for (const post of postsResult) {
                 if (post.commentsCount > 0) {
-                    const postComments = await firebaseService.getComments(post.id);
-                    allComments.push(...postComments);
+                    try {
+                        const postComments = await firebaseService.getComments(post.id);
+                        allComments.push(...postComments);
+                    } catch (commentError) {
+                        console.warn(`Failed to load comments for post ${post.id}:`, commentError);
+                        // Continue without comments for this post
+                    }
                 }
             }
             
@@ -1629,13 +1732,12 @@ const App = () => {
                 ...post,
                 location: {
                     ...post.location,
-                    distance: userLocation ? Math.round(calculateDistance(
-                        userLocation.lat, userLocation.lng, 
-                        post.location.lat, post.location.lng
-                    ) * 10) / 10 : 0,
+                    distance: (userLocation?.lat && userLocation?.lng && post.location?.lat && post.location?.lng) 
+                        ? Math.round(calculateDistance(userLocation.lat, userLocation.lng, post.location.lat, post.location.lng) * 10) / 10 
+                        : 0,
                     // Ensure nearestCity is available for coastwide display
-                    nearestCity: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng),
-                    name: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng)
+                    nearestCity: post.location?.nearestCity || (post.location?.lat && post.location?.lng ? getNearestCityState(post.location.lat, post.location.lng) : 'Unknown Location'),
+                    name: post.location?.nearestCity || (post.location?.lat && post.location?.lng ? getNearestCityState(post.location.lat, post.location.lng) : 'Unknown Location')
                 }
             }));
             
@@ -1643,7 +1745,7 @@ const App = () => {
             const topPosts = allPostsWithDistance
                 .filter(post => {
                     // Only include East Coast posts (rough longitude filter)
-                    return post.location.lng > -82 && post.location.lng < -66;
+                    return post.location?.lng && post.location.lng > -82 && post.location.lng < -66;
                 })
                 .sort((a, b) => {
                     const aComments = comments.filter(c => c.postId === a.id).length;
@@ -1667,7 +1769,7 @@ const App = () => {
         const effectiveLocation = customLocation || userLocation;
         
         let filteredPosts = posts.filter(post => {
-            if (post.location.lat && post.location.lng) {
+            if (post.location?.lat && post.location?.lng && effectiveLocation?.lat && effectiveLocation?.lng) {
                 const distance = calculateDistance(
                     effectiveLocation.lat, effectiveLocation.lng,
                     post.location.lat, post.location.lng
@@ -1682,8 +1784,10 @@ const App = () => {
             ...post,
             location: {
                 ...post.location,
-                distance: Math.round(calculateDistance(effectiveLocation?.lat || 0, effectiveLocation?.lng || 0, post.location.lat, post.location.lng) * 10) / 10,
-                nearestCity: post.location.nearestCity || getNearestCityState(post.location.lat, post.location.lng)
+                distance: (effectiveLocation?.lat && effectiveLocation?.lng && post.location?.lat && post.location?.lng) 
+                    ? Math.round(calculateDistance(effectiveLocation.lat, effectiveLocation.lng, post.location.lat, post.location.lng) * 10) / 10
+                    : null,
+                nearestCity: post.location?.nearestCity || (post.location?.lat && post.location?.lng ? getNearestCityState(post.location.lat, post.location.lng) : 'Unknown Location')
             }
         }));
         
@@ -1743,7 +1847,7 @@ const App = () => {
         
         try {
             await firebaseService.createPost(newPostContent.trim(), locationData, user);
-            await loadData(user.id);
+            await loadData(user.id, userLocation);
             setNewPostContent('');
             
             // Update rate limiting counters
@@ -1751,6 +1855,7 @@ const App = () => {
             setPostCount(prev => prev + 1);
         } catch (error) {
             console.error('Failed to create post:', error);
+            alert('Failed to create post. Please try again.');
         }
     };
     
@@ -2025,4 +2130,11 @@ const App = () => {
     );
 };
 
-export default App;
+// Wrap App with ErrorBoundary
+const WrappedApp = () => (
+    <ErrorBoundary>
+        <App />
+    </ErrorBoundary>
+);
+
+export default WrappedApp;
