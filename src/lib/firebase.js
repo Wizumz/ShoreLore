@@ -10,6 +10,23 @@ import {
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, connectAuthEmulator } from 'firebase/auth';
 
+// Validate environment variables before Firebase initialization
+const requiredEnvVars = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN', 
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID'
+];
+
+const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('Missing Firebase environment variables:', missingVars);
+  throw new Error(`Firebase configuration incomplete. Missing: ${missingVars.join(', ')}`);
+}
+
 // Firebase configuration - these will be loaded from environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
