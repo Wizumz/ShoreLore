@@ -2166,8 +2166,8 @@ const App = () => {
                 
                 {/* Footer */}
                 <div className="p-4 text-center text-xs terminal-accent bg-gray-100 border-t-2 border-navy-700">
-                    <div>🎣 Tight lines and good catches!</div>
-                    <div>Anonymous • Location-based • Fishing community</div>
+                    <div>🎣 Share the Shore, Spill the Lore</div>
+                    <div>Anonymous • Location-based • Your Local Fishing and Boating Community</div>
                 </div>
             </div>
         </div>
