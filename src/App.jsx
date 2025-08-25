@@ -2204,21 +2204,13 @@ const App = () => {
                             ))}
                             
                             {/* Loading indicator for infinite scroll */}
-                            {isLoadingMore && sortBy !== 'coastwide' && (
+                            {(isLoadingMore || (!hasMorePosts && filteredPosts.length > 0)) && sortBy !== 'coastwide' && (
                                 <div className="text-center py-6">
                                     <div className="inline-flex items-center space-x-2">
-                                        <div className="animate-spin text-2xl">⚓</div>
-                                        <span className="text-sm terminal-accent font-mono">Loading more posts...</span>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* End of posts indicator */}
-                            {!isLoadingMore && !hasMorePosts && sortBy !== 'coastwide' && filteredPosts.length > 0 && (
-                                <div className="text-center py-6">
-                                    <div className="inline-flex items-center space-x-2">
-                                        <span className="text-2xl">🏁</span>
-                                        <span className="text-sm terminal-accent font-mono">That's all the local catches!</span>
+                                        <div className={`text-2xl ${isLoadingMore ? 'animate-spin' : ''}`}>⚓</div>
+                                        {isLoadingMore && (
+                                            <span className="text-sm terminal-accent font-mono">Loading more posts...</span>
+                                        )}
                                     </div>
                                 </div>
                             )}
