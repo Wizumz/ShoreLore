@@ -76,7 +76,21 @@ service cloud.firestore {
         && request.resource.data.score == 0
         && request.resource.data.commentsCount == 0
         && request.resource.data.reportsCount == 0;
-      allow update: if false; // Posts are immutable once created (except via votes/comments functions)
+      // Allow updates for vote counts and comment counts
+      allow update: if isAuthenticated()
+        && request.resource.data.content == resource.data.content // Content cannot be changed
+        && request.resource.data.authorId == resource.data.authorId // Author cannot be changed
+        && request.resource.data.authorName == resource.data.authorName // Author name cannot be changed
+        && request.resource.data.createdAt == resource.data.createdAt // Creation time cannot be changed
+        && (
+          // Allow vote count updates
+          (request.resource.data.keys().hasOnly(['content', 'authorId', 'authorName', 'authorColor', 'location', 'nearestCity', 'upvotes', 'downvotes', 'score', 'commentsCount', 'reportsCount', 'createdAt'])
+           && request.resource.data.upvotes is int
+           && request.resource.data.downvotes is int
+           && request.resource.data.score is int
+           && request.resource.data.commentsCount is int
+           && request.resource.data.reportsCount is int)
+        );
     }
     
     // Comments collection
