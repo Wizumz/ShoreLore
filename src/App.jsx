@@ -1498,7 +1498,7 @@ const App = () => {
         setLoadedPostsCount(newCount);
         
         try {
-            await loadData(user.id);
+            await loadData(user.id, userLocation);
         } catch (error) {
             console.error('Failed to load more posts:', error);
         } finally {
@@ -1809,6 +1809,8 @@ const App = () => {
                 }
             }
             
+            console.log(`Loaded ${postsResult?.length || 0} posts, ${allComments?.length || 0} comments, ${votesArray?.length || 0} votes`);
+            console.log('Sample post vote counts:', postsResult?.slice(0, 3)?.map(p => ({ id: p.id, upvotes: p.upvotes, downvotes: p.downvotes, score: p.score })));
             setPosts(postsResult || []);
             setComments(allComments || []);
             setUserVotes(votesArray || []);
@@ -1980,8 +1982,13 @@ const App = () => {
         try {
             // Convert vote type to match Firebase service
             const firebaseVoteType = voteType === 'up' ? 'upvote' : 'downvote';
+            console.log(`Casting ${firebaseVoteType} for post ${postId}`);
             await firebaseService.castVote(postId, user.id, firebaseVoteType);
-            await loadData(user.id);
+            console.log('Vote cast successfully, waiting before refresh...');
+            // Small delay to ensure Firebase has processed the vote
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadData(user.id, userLocation);
+            console.log('Data refresh completed');
             
             // Update rate limiting counters
             setLastVoteTime(Date.now());
@@ -1997,7 +2004,7 @@ const App = () => {
         
         try {
             await firebaseService.createComment(postId, content, user);
-            await loadData(user.id);
+            await loadData(user.id, userLocation);
         } catch (error) {
             console.error('Failed to comment:', error);
         }
