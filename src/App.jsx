@@ -1296,12 +1296,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center space-x-3">
                                     <div className="w-8 h-8 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
-                    {post.author.charAt(0)}
+                    {(post.authorName || post.author || 'A').charAt(0)}
                 </div>
                     <div>
                         <div className="flex items-center space-x-2">
                             <div className="font-bold text-sm" style={{ color: post.authorColor?.value || '#1e3a8a' }}>
-                                {post.author}
+                                {post.authorName || post.author || 'Anonymous'}
                             </div>
                         </div>
                         <div className="text-xs terminal-accent">

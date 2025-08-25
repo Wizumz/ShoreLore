@@ -92,6 +92,21 @@ export const userService = {
    */
   async getOrCreateUser(screenName = null, color = null) {
     try {
+      // In demo mode, return mock user immediately
+      if (isDemoMode) {
+        console.warn('Demo mode: Returning mock user profile');
+        return {
+          id: 'demo-user-' + Date.now(),
+          screenName: screenName || this.generateScreenName(),
+          color: color || { name: 'Navy', value: '#1e40af' },
+          createdAt: new Date(),
+          postsCount: 0,
+          commentsCount: 0,
+          votesCount: 0,
+          isDemoMode: true
+        };
+      }
+      
       // Ensure anonymous authentication
       const firebaseUser = await getAnonymousUser();
       const deviceId = generateDeviceId();
@@ -122,6 +137,25 @@ export const userService = {
       return { id: userId, ...userData };
     } catch (error) {
       console.error('Error getting/creating user:', error);
+      
+      // Fallback for network/Firebase errors
+      if (error.code === 'auth/network-request-failed' || 
+          error.message.includes('network') ||
+          error.message.includes('CSP') ||
+          error.message.includes('firestore')) {
+        console.warn('Firebase error detected, falling back to offline user profile');
+        return {
+          id: 'offline-user-' + Date.now(),
+          screenName: screenName || this.generateScreenName(),
+          color: color || { name: 'Navy', value: '#1e40af' },
+          createdAt: new Date(),
+          postsCount: 0,
+          commentsCount: 0,
+          votesCount: 0,
+          isOfflineMode: true
+        };
+      }
+      
       throw error;
     }
   },

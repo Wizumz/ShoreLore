@@ -47,4 +47,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data: blob:; connect-src 'self' /.netlify/functions/ https://*.supabase.co; font-src 'self' data:; manifest-src 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.tailwindcss.com unpkg.com; style-src 'self' 'unsafe-inline' cdn.tailwindcss.com; img-src 'self' data: blob:; connect-src 'self' /.netlify/functions/ https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com https://*.supabase.co wss://*.firebaseio.com; font-src 'self' data:; manifest-src 'self'"

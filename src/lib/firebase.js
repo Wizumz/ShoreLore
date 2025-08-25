@@ -67,6 +67,12 @@ let persistenceEnabled = false;
 // Initialize persistence (async function to handle top-level await issue)
 async function initializePersistence() {
   try {
+    // Skip persistence initialization in demo mode
+    if (isDemoMode) {
+      console.warn('Demo mode: Skipping Firebase persistence initialization');
+      return;
+    }
+    
     await enableIndexedDbPersistence(db);
     persistenceEnabled = true;
     console.log('Firebase offline persistence enabled');
@@ -81,8 +87,10 @@ async function initializePersistence() {
   }
 }
 
-// Initialize persistence when module loads
-initializePersistence();
+// Initialize persistence when module loads (with safety check)
+if (!isDemoMode) {
+  initializePersistence();
+}
 
 // Development environment setup
 if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_USE_EMULATOR === 'true') {
@@ -102,6 +110,16 @@ if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_USE_EMULATOR === 'true'
  */
 export async function getAnonymousUser() {
   try {
+    // In demo mode, return mock user
+    if (isDemoMode) {
+      console.warn('Demo mode: Returning mock anonymous user');
+      return {
+        uid: 'demo-user-' + Date.now(),
+        isAnonymous: true,
+        providerData: []
+      };
+    }
+    
     if (!auth.currentUser) {
       const userCredential = await signInAnonymously(auth);
       console.log('Signed in anonymously:', userCredential.user.uid);
@@ -110,6 +128,20 @@ export async function getAnonymousUser() {
     return auth.currentUser;
   } catch (error) {
     console.error('Anonymous authentication failed:', error);
+    
+    // If authentication fails, return a mock user to prevent app crash
+    if (error.code === 'auth/network-request-failed' || 
+        error.message.includes('network') ||
+        error.message.includes('CSP')) {
+      console.warn('Network/CSP error detected, falling back to mock user');
+      return {
+        uid: 'offline-user-' + Date.now(),
+        isAnonymous: true,
+        providerData: [],
+        isOfflineMode: true
+      };
+    }
+    
     throw error;
   }
 }
