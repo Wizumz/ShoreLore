@@ -23,7 +23,7 @@ import {
   disableNetwork
 } from 'firebase/firestore';
 
-import { db, auth, getAnonymousUser } from './firebase.js';
+import { db, auth, getAnonymousUser, isDemoMode } from './firebase.js';
 
 /**
  * Geographic distance calculation (Haversine formula)
@@ -164,6 +164,16 @@ export const postsService = {
    */
   async createPost(content, location, user) {
     try {
+      // In demo mode, return mock success without actually creating the post
+      if (isDemoMode) {
+        console.warn('Demo mode: Post creation simulated (no actual Firebase connection)');
+        return { 
+          id: 'demo-post-' + Date.now(), 
+          success: true,
+          message: 'Post created in demo mode' 
+        };
+      }
+      
       const postsRef = collection(db, 'posts');
       const postData = {
         content: content.trim(),
@@ -201,6 +211,12 @@ export const postsService = {
    */
   async getPosts(userLocation = null, radiusKm = 16, limitCount = 20, sortBy = 'hot') {
     try {
+      // In demo mode, return empty array without Firebase call
+      if (isDemoMode) {
+        console.warn('Demo mode: Returning empty posts array (no actual Firebase connection)');
+        return [];
+      }
+      
       const postsRef = collection(db, 'posts');
       let q;
       

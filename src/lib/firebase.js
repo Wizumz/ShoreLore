@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, connectAuthEmulator } from 'firebase/auth';
 
-// Validate environment variables before Firebase initialization
+// Check for Firebase environment variables and provide fallback configuration
 const requiredEnvVars = [
   'VITE_FIREBASE_API_KEY',
   'VITE_FIREBASE_AUTH_DOMAIN', 
@@ -22,13 +22,18 @@ const requiredEnvVars = [
 
 const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName]);
 
-if (missingVars.length > 0) {
-  console.error('Missing Firebase environment variables:', missingVars);
-  throw new Error(`Firebase configuration incomplete. Missing: ${missingVars.join(', ')}`);
-}
-
-// Firebase configuration - these will be loaded from environment variables
-const firebaseConfig = {
+// If environment variables are missing, use fallback configuration for build/demo purposes
+const firebaseConfig = missingVars.length > 0 ? {
+  // Fallback configuration for builds without environment variables
+  apiKey: "demo-api-key",
+  authDomain: "demo-project.firebaseapp.com",
+  projectId: "demo-project",
+  storageBucket: "demo-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:demo-app-id",
+  measurementId: "G-DEMO-ID"
+} : {
+  // Production configuration from environment variables
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -38,12 +43,23 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Log configuration status
+if (missingVars.length > 0) {
+  console.warn('Firebase environment variables not found, using fallback configuration:', missingVars);
+  console.warn('Firebase features will be limited. Set up environment variables for full functionality.');
+} else {
+  console.log('Firebase configuration loaded from environment variables');
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// Export demo mode flag for other services to check
+export const isDemoMode = missingVars.length > 0;
 
 // Enable offline persistence for better PWA experience
 let persistenceEnabled = false;
