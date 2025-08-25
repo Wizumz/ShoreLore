@@ -16,6 +16,32 @@ class ErrorBoundary extends React.Component {
     componentDidCatch(error, errorInfo) {
         // Log the error to console for debugging
         console.error('React Error Boundary caught an error:', error, errorInfo);
+        
+        // Enhanced error reporting
+        const errorReport = {
+            message: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+        };
+        
+        // Save error report for debugging
+        try {
+            localStorage.setItem('riprap_last_error', JSON.stringify(errorReport));
+        } catch (e) {
+            console.warn('Failed to save error report:', e);
+        }
+        
+        // Check if error is recoverable
+        const isFirebaseError = error.message.includes('Firebase') || 
+                               error.message.includes('firestore') ||
+                               error.message.includes('auth/');
+        
+        if (isFirebaseError) {
+            console.warn('Firebase error detected, app may recover after restart');
+        }
     }
 
     render() {
@@ -1443,21 +1469,29 @@ const App = () => {
                         const firebaseUser = await getUserIdentity();
                         if (isMounted) setUser(firebaseUser);
                     } catch (error) {
-                        console.warn('Failed to load user from Firebase, using localStorage:', error);
+                        console.warn('Firebase user service failed, falling back to local mode:', error);
+                        
+                        // Enhanced fallback to local-only user management
                         try {
                             const localUser = JSON.parse(userData);
-                            if (isMounted) setUser(localUser);
+                            // Validate required user properties
+                            if (localUser && localUser.id && localUser.screenName) {
+                                if (isMounted) setUser(localUser);
+                                console.log('Successfully loaded user from localStorage');
+                            } else {
+                                throw new Error('Invalid user data structure');
+                            }
                         } catch (parseError) {
                             console.error('Failed to parse localStorage user data:', parseError);
-                            if (isMounted) {
-                                localStorage.removeItem('riprap_user');
-                                setShowUsernameSetup(true);
-                            }
+                            // Clear corrupted data and start fresh
+                            localStorage.removeItem('riprap_user');
+                            if (isMounted) setShowUsernameSetup(true);
                         }
                     }
                 }
             } catch (error) {
                 console.error('Failed to initialize user:', error);
+                // Ensure app doesn't crash - always provide a fallback
                 if (isMounted) setShowUsernameSetup(true);
             }
         };
@@ -1501,34 +1535,44 @@ const App = () => {
                     setCurrentLocationName(savedSettings.customLocation.name);
                     console.log('Using saved custom location:', savedSettings.customLocation);
                 } else {
-                    // No saved location, try GPS
-                    if (navigator.geolocation) {
-                        try {
-                            const position = await new Promise((resolve, reject) => {
-                                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    // No saved location, try GPS with safe handling
+                    const getLocationSafely = () => {
+                        return new Promise((resolve) => {
+                            if (!navigator.geolocation) {
+                                console.warn('Geolocation not supported');
+                                resolve(null);
+                                return;
+                            }
+                            
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    console.log('GPS location acquired');
+                                    resolve({
+                                        lat: position.coords.latitude,
+                                        lng: position.coords.longitude
+                                    });
+                                },
+                                (error) => {
+                                    console.warn('Geolocation failed:', error.message);
+                                    resolve(null); // Always resolve, never reject
+                                },
+                                {
                                     enableHighAccuracy: true,
                                     timeout: 10000,
                                     maximumAge: 300000 // 5 minutes cache
-                                });
-                            });
-                            
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            effectiveLocation = { lat, lng };
-                            setUserLocation({ lat, lng });
-                            setCurrentLocationName(getApproximateLocation(lat, lng));
-                            console.log('GPS location acquired:', { lat, lng });
-                        } catch (error) {
-                            console.error('GPS location failed:', error.message);
-                            // Fallback to a default location (Cape Cod) if GPS fails
-                            const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
-                            effectiveLocation = fallbackLocation;
-                            setUserLocation(fallbackLocation);
-                            setCurrentLocationName(`${fallbackLocation.name} (Default)`);
-                        }
+                                }
+                            );
+                        });
+                    };
+                    
+                    const position = await getLocationSafely();
+                    if (position) {
+                        effectiveLocation = position;
+                        setUserLocation(position);
+                        setCurrentLocationName(getApproximateLocation(position.lat, position.lng));
+                        console.log('GPS location acquired:', position);
                     } else {
-                        console.warn('Geolocation not supported');
-                        // Fallback to a default location
+                        // Fallback to default location
                         const fallbackLocation = STRIPED_BASS_LOCATIONS['cape-cod-ma'];
                         effectiveLocation = fallbackLocation;
                         setUserLocation(fallbackLocation);

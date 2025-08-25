@@ -1,0 +1,31 @@
+{
+  "firestore": {
+    "rules": "firestore.test.rules",
+    "host": "localhost",
+    "port": 8080
+  },
+  "auth": {
+    "host": "localhost", 
+    "port": 9099
+  },
+  "ui": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 4000
+  },
+  "emulators": {
+    "firestore": {
+      "host": "localhost",
+      "port": 8080
+    },
+    "auth": {
+      "host": "localhost",
+      "port": 9099
+    },
+    "ui": {
+      "enabled": true,
+      "host": "localhost",
+      "port": 4000
+    }
+  }
+}

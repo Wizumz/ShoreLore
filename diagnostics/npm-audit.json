@@ -1,0 +1,695 @@
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {
+    "@netlify/build": {
+      "name": "@netlify/build",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@netlify/edge-bundler",
+        "@netlify/zip-it-and-ship-it"
+      ],
+      "effects": [
+        "netlify-cli"
+      ],
+      "range": "0.0.24 - 0.0.26 || 9.1.0 - 11.17.0 || 11.37.2 - 12.1.2 || 29.20.8 - 32.1.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@netlify/build"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "@netlify/edge-bundler": {
+      "name": "@netlify/edge-bundler",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "esbuild"
+      ],
+      "effects": [
+        "@netlify/build",
+        "netlify-cli"
+      ],
+      "range": "8.20.0 - 11.4.0 || 12.0.0 - 13.0.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@netlify/edge-bundler"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "@netlify/functions-utils": {
+      "name": "@netlify/functions-utils",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@netlify/zip-it-and-ship-it"
+      ],
+      "effects": [],
+      "range": "1.3.14 - 1.3.29 || 1.3.41 || 5.2.24 - 5.3.16",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@netlify/functions-utils"
+      ],
+      "fixAvailable": true
+    },
+    "@netlify/zip-it-and-ship-it": {
+      "name": "@netlify/zip-it-and-ship-it",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "esbuild"
+      ],
+      "effects": [
+        "@netlify/build",
+        "@netlify/functions-utils",
+        "netlify-cli"
+      ],
+      "range": "2.2.0 - 4.2.7 || 9.17.0 - 10.0.7",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@netlify/zip-it-and-ship-it"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "@octokit/endpoint": {
+      "name": "@octokit/endpoint",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102258,
+          "name": "@octokit/endpoint",
+          "dependency": "@octokit/endpoint",
+          "title": "@octokit/endpoint has a Regular Expression in parse that Leads to ReDoS Vulnerability Due to Catastrophic Backtracking",
+          "url": "https://github.com/advisories/GHSA-x4c5-c7rf-jjgv",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=9.0.5 <9.0.6"
+        }
+      ],
+      "effects": [],
+      "range": "9.0.5",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@octokit/endpoint"
+      ],
+      "fixAvailable": true
+    },
+    "@octokit/plugin-paginate-rest": {
+      "name": "@octokit/plugin-paginate-rest",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102899,
+          "name": "@octokit/plugin-paginate-rest",
+          "dependency": "@octokit/plugin-paginate-rest",
+          "title": "@octokit/plugin-paginate-rest has a Regular Expression in iterator Leads to ReDoS Vulnerability Due to Catastrophic Backtracking",
+          "url": "https://github.com/advisories/GHSA-h5c3-5r3r-rr8q",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=9.3.0-beta.1 <11.4.1"
+        }
+      ],
+      "effects": [
+        "@octokit/rest"
+      ],
+      "range": "9.3.0-beta.1 - 11.4.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@octokit/plugin-paginate-rest"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "@octokit/request": {
+      "name": "@octokit/request",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102896,
+          "name": "@octokit/request",
+          "dependency": "@octokit/request",
+          "title": "@octokit/request has a Regular Expression in fetchWrapper that Leads to ReDoS Vulnerability Due to Catastrophic Backtracking",
+          "url": "https://github.com/advisories/GHSA-rmvr-2pp2-xj38",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=1.0.0 <8.4.1"
+        }
+      ],
+      "effects": [],
+      "range": "<=8.4.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@octokit/request"
+      ],
+      "fixAvailable": true
+    },
+    "@octokit/request-error": {
+      "name": "@octokit/request-error",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102256,
+          "name": "@octokit/request-error",
+          "dependency": "@octokit/request-error",
+          "title": "@octokit/request-error has a Regular Expression in index that Leads to ReDoS Vulnerability Due to Catastrophic Backtracking",
+          "url": "https://github.com/advisories/GHSA-xx4v-prfh-6cgc",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=1.0.0 <5.1.1"
+        }
+      ],
+      "effects": [],
+      "range": "<=5.1.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@octokit/request-error"
+      ],
+      "fixAvailable": true
+    },
+    "@octokit/rest": {
+      "name": "@octokit/rest",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        "@octokit/plugin-paginate-rest"
+      ],
+      "effects": [
+        "netlify-cli"
+      ],
+      "range": "20.1.1 || 21.0.0-beta.1 - 21.0.0-beta.4",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@octokit/rest"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "brace-expansion": {
+      "name": "brace-expansion",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1105443,
+          "name": "brace-expansion",
+          "dependency": "brace-expansion",
+          "title": "brace-expansion Regular Expression Denial of Service vulnerability",
+          "url": "https://github.com/advisories/GHSA-v6h2-p8h4-qcjw",
+          "severity": "low",
+          "cwe": [
+            "CWE-400"
+          ],
+          "cvss": {
+            "score": 3.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=1.0.0 <=1.1.11"
+        },
+        {
+          "source": 1105444,
+          "name": "brace-expansion",
+          "dependency": "brace-expansion",
+          "title": "brace-expansion Regular Expression Denial of Service vulnerability",
+          "url": "https://github.com/advisories/GHSA-v6h2-p8h4-qcjw",
+          "severity": "low",
+          "cwe": [
+            "CWE-400"
+          ],
+          "cvss": {
+            "score": 3.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=2.0.0 <=2.0.1"
+        }
+      ],
+      "effects": [],
+      "range": "1.0.0 - 1.1.11 || 2.0.0 - 2.0.1",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/@fastify/static/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/@netlify/build-info/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/@netlify/build/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/@netlify/zip-it-and-ship-it/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/archiver-utils/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/brace-expansion",
+        "node_modules/netlify-cli/node_modules/readdir-glob/node_modules/brace-expansion"
+      ],
+      "fixAvailable": true
+    },
+    "esbuild": {
+      "name": "esbuild",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1102341,
+          "name": "esbuild",
+          "dependency": "esbuild",
+          "title": "esbuild enables any website to send any requests to the development server and read the response",
+          "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-346"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N"
+          },
+          "range": "<=0.24.2"
+        }
+      ],
+      "effects": [
+        "@netlify/edge-bundler",
+        "@netlify/zip-it-and-ship-it",
+        "vite"
+      ],
+      "range": "<=0.24.2",
+      "nodes": [
+        "node_modules/esbuild",
+        "node_modules/netlify-cli/node_modules/@netlify/edge-bundler/node_modules/esbuild",
+        "node_modules/netlify-cli/node_modules/esbuild"
+      ],
+      "fixAvailable": {
+        "name": "vite",
+        "version": "7.1.3",
+        "isSemVerMajor": true
+      }
+    },
+    "external-editor": {
+      "name": "external-editor",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "tmp"
+      ],
+      "effects": [
+        "inquirer"
+      ],
+      "range": ">=1.1.1",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/external-editor"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "http-proxy-middleware": {
+      "name": "http-proxy-middleware",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1104105,
+          "name": "http-proxy-middleware",
+          "dependency": "http-proxy-middleware",
+          "title": "http-proxy-middleware allows fixRequestBody to proceed even if bodyParser has failed",
+          "url": "https://github.com/advisories/GHSA-9gqv-wp59-fq42",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-754"
+          ],
+          "cvss": {
+            "score": 4,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:N/I:L/A:N"
+          },
+          "range": ">=1.3.0 <2.0.9"
+        },
+        {
+          "source": 1104106,
+          "name": "http-proxy-middleware",
+          "dependency": "http-proxy-middleware",
+          "title": "http-proxy-middleware can call writeBody twice because \"else if\" is not used",
+          "url": "https://github.com/advisories/GHSA-4www-5p9h-95mh",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-670"
+          ],
+          "cvss": {
+            "score": 4,
+            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:N/I:N/A:L"
+          },
+          "range": ">=1.3.0 <2.0.8"
+        }
+      ],
+      "effects": [
+        "netlify-cli"
+      ],
+      "range": "1.3.0 - 2.0.8",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/http-proxy-middleware"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "inquirer": {
+      "name": "inquirer",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "external-editor"
+      ],
+      "effects": [
+        "netlify-cli",
+        "tabtab"
+      ],
+      "range": "3.0.0 - 8.2.6 || 9.0.0 - 9.3.7",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/inquirer"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "ipx": {
+      "name": "ipx",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1106842,
+          "name": "ipx",
+          "dependency": "ipx",
+          "title": "IPX Allows Path Traversal via Prefix Matching Bypass",
+          "url": "https://github.com/advisories/GHSA-mm3p-j368-7jcr",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=2.0.0-0 <2.1.1"
+        }
+      ],
+      "effects": [
+        "netlify-cli"
+      ],
+      "range": "2.0.0-0 - 2.1.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/ipx"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "nanoid": {
+      "name": "nanoid",
+      "severity": "moderate",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1101163,
+          "name": "nanoid",
+          "dependency": "nanoid",
+          "title": "Predictable results in nanoid generation when given non-integer values",
+          "url": "https://github.com/advisories/GHSA-mwcw-c2x4-8c55",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-835"
+          ],
+          "cvss": {
+            "score": 4.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": "<3.3.8"
+        }
+      ],
+      "effects": [],
+      "range": "<3.3.8",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/nanoid"
+      ],
+      "fixAvailable": true
+    },
+    "netlify-cli": {
+      "name": "netlify-cli",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "@netlify/build",
+        "@netlify/edge-bundler",
+        "@netlify/zip-it-and-ship-it",
+        "@octokit/rest",
+        "http-proxy-middleware",
+        "inquirer",
+        "ipx",
+        "tabtab"
+      ],
+      "effects": [],
+      "range": ">=2.0.0-alpha.1",
+      "nodes": [
+        "node_modules/netlify-cli"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "on-headers": {
+      "name": "on-headers",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1106812,
+          "name": "on-headers",
+          "dependency": "on-headers",
+          "title": "on-headers is vulnerable to http response header manipulation",
+          "url": "https://github.com/advisories/GHSA-76c9-3jph-rj3q",
+          "severity": "low",
+          "cwe": [
+            "CWE-241"
+          ],
+          "cvss": {
+            "score": 3.4,
+            "vectorString": "CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:U/C:L/I:L/A:N"
+          },
+          "range": "<1.1.0"
+        }
+      ],
+      "effects": [],
+      "range": "<1.1.0",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/on-headers"
+      ],
+      "fixAvailable": true
+    },
+    "tabtab": {
+      "name": "tabtab",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        "inquirer"
+      ],
+      "effects": [
+        "netlify-cli"
+      ],
+      "range": ">=3.0.0-beta",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/tabtab"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "tar-fs": {
+      "name": "tar-fs",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1104676,
+          "name": "tar-fs",
+          "dependency": "tar-fs",
+          "title": "tar-fs Vulnerable to Link Following and Path Traversal via Extracting a Crafted tar File",
+          "url": "https://github.com/advisories/GHSA-pq67-2wwv-3xjx",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": ">=3.0.0 <3.0.7"
+        },
+        {
+          "source": 1104677,
+          "name": "tar-fs",
+          "dependency": "tar-fs",
+          "title": "tar-fs Vulnerable to Link Following and Path Traversal via Extracting a Crafted tar File",
+          "url": "https://github.com/advisories/GHSA-pq67-2wwv-3xjx",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+          },
+          "range": ">=2.0.0 <2.1.2"
+        },
+        {
+          "source": 1106929,
+          "name": "tar-fs",
+          "dependency": "tar-fs",
+          "title": "tar-fs can extract outside the specified dir with a specific tarball",
+          "url": "https://github.com/advisories/GHSA-8cj5-5rvv-wf4v",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=3.0.0 <3.0.9"
+        },
+        {
+          "source": 1106930,
+          "name": "tar-fs",
+          "dependency": "tar-fs",
+          "title": "tar-fs can extract outside the specified dir with a specific tarball",
+          "url": "https://github.com/advisories/GHSA-8cj5-5rvv-wf4v",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 0,
+            "vectorString": null
+          },
+          "range": ">=2.0.0 <2.1.3"
+        }
+      ],
+      "effects": [],
+      "range": "2.0.0 - 2.1.2 || 3.0.0 - 3.0.8",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/prebuild-install/node_modules/tar-fs",
+        "node_modules/netlify-cli/node_modules/tar-fs"
+      ],
+      "fixAvailable": true
+    },
+    "tmp": {
+      "name": "tmp",
+      "severity": "low",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1106849,
+          "name": "tmp",
+          "dependency": "tmp",
+          "title": "tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter",
+          "url": "https://github.com/advisories/GHSA-52f5-9888-hmc6",
+          "severity": "low",
+          "cwe": [
+            "CWE-59"
+          ],
+          "cvss": {
+            "score": 2.5,
+            "vectorString": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": "<=0.2.3"
+        }
+      ],
+      "effects": [
+        "external-editor"
+      ],
+      "range": "<=0.2.3",
+      "nodes": [
+        "node_modules/netlify-cli/node_modules/tmp",
+        "node_modules/netlify-cli/node_modules/tmp-promise/node_modules/tmp"
+      ],
+      "fixAvailable": {
+        "name": "netlify-cli",
+        "version": "23.3.1",
+        "isSemVerMajor": true
+      }
+    },
+    "vite": {
+      "name": "vite",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "esbuild"
+      ],
+      "effects": [],
+      "range": "0.11.0 - 6.1.6",
+      "nodes": [
+        "node_modules/vite"
+      ],
+      "fixAvailable": {
+        "name": "vite",
+        "version": "7.1.3",
+        "isSemVerMajor": true
+      }
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 6,
+      "moderate": 15,
+      "high": 1,
+      "critical": 0,
+      "total": 22
+    },
+    "dependencies": {
+      "prod": 98,
+      "dev": 1493,
+      "optional": 125,
+      "peer": 29,
+      "peerOptional": 0,
+      "total": 1590
+    }
+  }
+}
