@@ -1378,12 +1378,12 @@ const Post = ({ post, onVote, onComment, onReport, userVotes, comments, showLoca
                         <div key={comment.id} className="bg-gray-100 border-2 border-navy-700 p-2">
                             <div className="flex items-center space-x-2 mb-1">
                                 <div className="w-4 h-4 bg-navy-700 text-white flex items-center justify-center text-xs font-bold">
-                                    {comment.author.charAt(0)}
+                                    {(comment.authorName || comment.author || 'A').charAt(0)}
                                 </div>
                                 <span className="font-bold text-xs" style={{ color: comment.authorColor?.value || '#1e3a8a' }}>
-                                    {comment.author}
+                                    {comment.authorName || comment.author || 'Anonymous'}
                                 </span>
-                                <span className="text-xs terminal-accent">{getTimeAgo(comment.timestamp)}</span>
+                                <span className="text-xs terminal-accent">{getTimeAgo(comment.createdAt || comment.timestamp)}</span>
                             </div>
                             <div className="terminal-text text-xs font-mono pl-6">{comment.content}</div>
                         </div>
@@ -1447,11 +1447,64 @@ const App = () => {
     const [postCount, setPostCount] = useState(0);
     const [voteCount, setVoteCount] = useState(0);
     
-    // Lazy loading
+    // Lazy loading and infinite scroll
     const [loadedPostsCount, setLoadedPostsCount] = useState(20); // Start with 20 posts
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMorePosts, setHasMorePosts] = useState(true);
     
     const textareaRef = useRef(null);
+    
+    // Infinite scroll implementation
+    useEffect(() => {
+        const handleScroll = () => {
+            // Only trigger infinite scroll for 'hot' and 'new' modes, not 'coastwide'
+            if (sortBy === 'coastwide' || isLoadingMore || !hasMorePosts) return;
+            
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            // Trigger when user is within 200px of bottom
+            if (scrollPosition >= documentHeight - 200) {
+                loadMorePosts();
+            }
+        };
+        
+        const throttledHandleScroll = throttle(handleScroll, 200);
+        window.addEventListener('scroll', throttledHandleScroll);
+        
+        return () => window.removeEventListener('scroll', throttledHandleScroll);
+    }, [sortBy, isLoadingMore, hasMorePosts]);
+    
+    // Throttle function for scroll events
+    const throttle = (func, limit) => {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    };
+    
+    // Load more posts function
+    const loadMorePosts = async () => {
+        if (isLoadingMore || !hasMorePosts || !user) return;
+        
+        setIsLoadingMore(true);
+        const newCount = loadedPostsCount + 10; // Load 10 more posts
+        setLoadedPostsCount(newCount);
+        
+        try {
+            await loadData(user.id);
+        } catch (error) {
+            console.error('Failed to load more posts:', error);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
     
     // Check if user needs to set up username and load location settings
     useEffect(() => {
@@ -1759,6 +1812,9 @@ const App = () => {
             setPosts(postsResult || []);
             setComments(allComments || []);
             setUserVotes(votesArray || []);
+            
+            // Update hasMorePosts based on results
+            setHasMorePosts(postsResult && postsResult.length >= loadedPostsCount);
         } catch (error) {
             console.error('Failed to load data:', error);
             // Fallback to empty arrays if Firebase fails
@@ -2149,15 +2205,21 @@ const App = () => {
                             
                             {/* Loading indicator for infinite scroll */}
                             {isLoadingMore && sortBy !== 'coastwide' && (
-                                <div className="text-center py-4">
-                                    <div className="text-sm terminal-accent">Loading more posts...</div>
+                                <div className="text-center py-6">
+                                    <div className="inline-flex items-center space-x-2">
+                                        <div className="animate-spin text-2xl">⚓</div>
+                                        <span className="text-sm terminal-accent font-mono">Loading more posts...</span>
+                                    </div>
                                 </div>
                             )}
                             
                             {/* End of posts indicator */}
-                            {!isLoadingMore && sortBy !== 'coastwide' && filteredPosts.length >= loadedPostsCount && (
-                                <div className="text-center py-4">
-                                    <div className="text-xs terminal-accent">Scroll down for more posts</div>
+                            {!isLoadingMore && !hasMorePosts && sortBy !== 'coastwide' && filteredPosts.length > 0 && (
+                                <div className="text-center py-6">
+                                    <div className="inline-flex items-center space-x-2">
+                                        <span className="text-2xl">🏁</span>
+                                        <span className="text-sm terminal-accent font-mono">That's all the local catches!</span>
+                                    </div>
                                 </div>
                             )}
                         </>
