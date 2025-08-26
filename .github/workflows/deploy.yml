@@ -1,4 +1,4 @@
-name: Deploy RipRap to GitHub Pages
+name: Deploy ShoreLore to GitHub Pages
 
 on:
   push:

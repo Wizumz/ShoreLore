@@ -6,7 +6,7 @@ You need to add the Firebase configuration as **repository secrets** in GitHub t
 
 ### Step 1: Access Repository Settings
 
-1. Go to your GitHub repository: https://github.com/Wizumz/RipRap
+1. Go to your GitHub repository: https://github.com/Wizumz/ShoreLore
 2. Click on **Settings** tab (at the top of the repository)
 3. In the left sidebar, click **Secrets and variables** → **Actions**
 

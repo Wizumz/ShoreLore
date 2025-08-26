@@ -8,9 +8,9 @@ import { getAuth, signInAnonymously } from 'firebase/auth';
 // Test Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCMhCGiUmH6R7-PrKq0raLZba2Cj0truzY",
-  authDomain: "riprap-c725e.firebaseapp.com",
-  projectId: "riprap-c725e",
-  storageBucket: "riprap-c725e.firebasestorage.app",
+  authDomain: "shorelore-c725e.firebaseapp.com",
+  projectId: "shorelore-c725e",
+  storageBucket: "shorelore-c725e.firebasestorage.app",
   messagingSenderId: "995615030562",
   appId: "1:995615030562:web:5194ca1ed7659de1cd797b",
   measurementId: "G-6MDLTVXSTF"

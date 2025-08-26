@@ -1,8 +1,8 @@
-# RipRap Deployment Guide
+# ShoreLore Deployment Guide
 
 ## Netlify Deployment (Recommended)
 
-RipRap is optimized for Netlify deployment with automatic builds and PWA support.
+ShoreLore is optimized for Netlify deployment with automatic builds and PWA support.
 
 ### Prerequisites
 - Node.js 18+ installed
@@ -14,7 +14,7 @@ RipRap is optimized for Netlify deployment with automatic builds and PWA support
 1. **Connect Repository**:
    - Log into [Netlify](https://netlify.com)
    - Click "New site from Git"
-   - Choose your Git provider and select the RipRap repository
+   - Choose your Git provider and select the ShoreLore repository
 
 2. **Configure Build Settings**:
    ```
@@ -71,7 +71,7 @@ Create a `netlify.toml` file in the root directory for advanced configuration:
 ### Setup Instructions
 
 1. **Enable GitHub Pages**:
-   - Navigate to https://github.com/[username]/RipRap/settings/pages
+   - Navigate to https://github.com/[username]/ShoreLore/settings/pages
    - Under "Source", select "Deploy from a branch"
    - Choose "main" branch and "/ (root)" folder
    - Click "Save"
@@ -103,7 +103,7 @@ Create a `netlify.toml` file in the root directory for advanced configuration:
    ```
 
 3. **Access Your App**:
-   Your app will be available at: **https://[username].github.io/RipRap/**
+   Your app will be available at: **https://[username].github.io/ShoreLore/**
 
 ## PWA Requirements
 

@@ -25,7 +25,7 @@ test.describe('Error Boundary and Crash Prevention', () => {
         await page.waitForTimeout(2000);
         
         // App should be restored
-        await expect(page.locator('text=RIPRAP')).toBeVisible();
+        await expect(page.locator('text=SHORELORE')).toBeVisible();
       }
     }
   });
@@ -68,8 +68,8 @@ test.describe('Error Boundary and Crash Prevention', () => {
     // Corrupt localStorage to simulate storage issues
     await page.evaluate(() => {
       try {
-        localStorage.setItem('riprap_user', 'invalid-json{');
-        localStorage.setItem('riprap_location_settings', 'corrupted');
+        localStorage.setItem('shorelore_user', 'invalid-json{');
+        localStorage.setItem('shorelore_location_settings', 'corrupted');
       } catch (e) {
         // Storage might be disabled
         console.log('Storage access failed:', e);
@@ -86,7 +86,7 @@ test.describe('Error Boundary and Crash Prevention', () => {
     
     // Should either show username setup or recover
     const hasUsernameSetup = await page.locator('text=Choose your angler name').count();
-    const hasMainApp = await page.locator('text=RIPRAP').count();
+    const hasMainApp = await page.locator('text=SHORELORE').count();
     expect(hasUsernameSetup + hasMainApp).toBeGreaterThan(0);
   });
 
@@ -115,7 +115,7 @@ test.describe('Error Boundary and Crash Prevention', () => {
     const errorBoundary = await page.locator('text=Something went wrong').count();
     expect(errorBoundary).toBe(0);
     
-    await expect(page.locator('text=RIPRAP')).toBeVisible();
+    await expect(page.locator('text=SHORELORE')).toBeVisible();
   });
 
   test('should handle Firebase initialization failures', async ({ page }) => {
@@ -150,7 +150,7 @@ test.describe('Error Boundary and Crash Prevention', () => {
         await page.waitForTimeout(3000);
         
         // Should recover after restart
-        await expect(page.locator('text=RIPRAP')).toBeVisible();
+        await expect(page.locator('text=SHORELORE')).toBeVisible();
       }
     }
   });

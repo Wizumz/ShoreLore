@@ -1,4 +1,4 @@
-// Firebase configuration and initialization for RipRap fishing app
+// Firebase configuration and initialization for ShoreLore fishing app
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, 

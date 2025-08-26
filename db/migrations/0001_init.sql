@@ -1,4 +1,4 @@
--- Initial migration for RipRap fishing app
+-- Initial migration for ShoreLore fishing app
 -- Creates users, posts, comments, votes, and reports tables with PostGIS support
 
 -- Enable PostGIS extension for geospatial queries

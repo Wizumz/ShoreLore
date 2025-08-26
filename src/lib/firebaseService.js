@@ -1,4 +1,4 @@
-// Firebase service layer for RipRap fishing app
+// Firebase service layer for ShoreLore fishing app
 // Provides same interface as existing IndexedDB operations for seamless migration
 
 import { 
@@ -51,14 +51,14 @@ function kmToMiles(km) {
  * This maintains compatibility with the existing anonymous user system
  */
 function generateDeviceId() {
-  let deviceId = localStorage.getItem('riprap_device_id');
+  let deviceId = localStorage.getItem('shorelore_device_id');
   if (!deviceId) {
     // Generate a unique device ID based on browser characteristics
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'top';
     ctx.font = '14px Arial';
-    ctx.fillText('RipRap device fingerprint', 2, 2);
+    ctx.fillText('ShoreLore device fingerprint', 2, 2);
     
     const fingerprint = [
       canvas.toDataURL(),
@@ -78,7 +78,7 @@ function generateDeviceId() {
     }
     
     deviceId = `device_${Math.abs(hash)}_${Date.now()}`;
-    localStorage.setItem('riprap_device_id', deviceId);
+    localStorage.setItem('shorelore_device_id', deviceId);
   }
   return deviceId;
 }

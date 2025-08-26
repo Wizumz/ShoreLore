@@ -25,7 +25,7 @@ test.describe('Stability Fix Validation', () => {
     expect(errorBoundary).toBe(0);
     
     // Should show either main app or username setup
-    const hasMainApp = await page.locator('text=RIPRAP').count();
+    const hasMainApp = await page.locator('text=SHORELORE').count();
     const hasUsernameSetup = await page.locator('text=Choose your angler name').count();
     expect(hasMainApp + hasUsernameSetup).toBeGreaterThan(0);
     
@@ -82,7 +82,7 @@ test.describe('Stability Fix Validation', () => {
     expect(errorBoundary).toBe(0);
     
     // Should show main app with fallback location
-    await expect(page.locator('text=RIPRAP')).toBeVisible();
+    await expect(page.locator('text=SHORELORE')).toBeVisible();
     
     // Check for location fallback
     const locationText = await page.locator('text=Default').count();
@@ -94,8 +94,8 @@ test.describe('Stability Fix Validation', () => {
   test('should handle corrupted localStorage gracefully', async ({ page }) => {
     // Corrupt localStorage before loading the app
     await page.addInitScript(() => {
-      localStorage.setItem('riprap_user', 'invalid-json{corrupted');
-      localStorage.setItem('riprap_location_settings', '{{broken}}');
+      localStorage.setItem('shorelore_user', 'invalid-json{corrupted');
+      localStorage.setItem('shorelore_location_settings', '{{broken}}');
     });
 
     const consoleErrors = [];
@@ -118,7 +118,7 @@ test.describe('Stability Fix Validation', () => {
     
     // Should either show username setup (if user data cleared) or main app
     const hasUsernameSetup = await page.locator('text=Choose your angler name').count();
-    const hasMainApp = await page.locator('text=RIPRAP').count();
+    const hasMainApp = await page.locator('text=SHORELORE').count();
     expect(hasUsernameSetup + hasMainApp).toBeGreaterThan(0);
     
     console.log('LocalStorage corruption handled, warnings:', consoleWarnings.length);
@@ -161,11 +161,11 @@ test.describe('Stability Fix Validation', () => {
         await page.waitForTimeout(3000);
         
         // Should recover after restart
-        await expect(page.locator('text=RIPRAP')).toBeVisible();
+        await expect(page.locator('text=SHORELORE')).toBeVisible();
       }
     } else {
       // Great! App handled Firebase failure without crashing
-      await expect(page.locator('text=RIPRAP')).toBeVisible();
+      await expect(page.locator('text=SHORELORE')).toBeVisible();
       console.log('Firebase network failure handled gracefully');
     }
     
@@ -178,7 +178,7 @@ test.describe('Stability Fix Validation', () => {
     
     // Check if error reports are being saved (from previous errors)
     const hasErrorReport = await page.evaluate(() => {
-      const errorReport = localStorage.getItem('riprap_last_error');
+      const errorReport = localStorage.getItem('shorelore_last_error');
       return errorReport ? JSON.parse(errorReport) : null;
     });
     

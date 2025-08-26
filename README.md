@@ -1,8 +1,8 @@
-# 🎣 RipRap - Share the Shore, Spill the Lore
+# 🎣 ShoreLore - Share the Shore, Spill the Lore
 
 A Progressive Web App inspired by Yik Yak, designed specifically for fishing communities to anonymously share catches, fishing spots, and tips within a 5-mile radius.
 
-![RipRap Logo](./public/icons/icon-192x192.png)
+![ShoreLore Logo](./public/icons/icon-192x192.png)
 
 ## 🌊 Features
 
@@ -38,8 +38,8 @@ A Progressive Web App inspired by Yik Yak, designed specifically for fishing com
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/RipRap.git
-   cd RipRap
+   git clone https://github.com/yourusername/ShoreLore.git
+   cd ShoreLore
    ```
 
 2. **Install dependencies**:
@@ -119,7 +119,7 @@ This project is optimized for Netlify deployment:
 
 ### File Structure
 ```
-RipRap/
+ShoreLore/
 ├── index.html              # Main entry point
 ├── src/
 │   └── App.jsx            # React application code

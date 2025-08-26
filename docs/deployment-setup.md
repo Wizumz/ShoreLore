@@ -2,7 +2,7 @@
 
 ## GitHub Actions Build Fix
 
-The RipRap application now includes fallback configuration that allows builds to succeed even without Firebase environment variables. This ensures that GitHub Actions can build and deploy the app successfully.
+The ShoreLore application now includes fallback configuration that allows builds to succeed even without Firebase environment variables. This ensures that GitHub Actions can build and deploy the app successfully.
 
 ## How It Works
 

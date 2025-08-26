@@ -2,7 +2,7 @@
   <!-- Background -->
   <rect width="192" height="192" rx="24" fill="#0f766e"/>
   
-  <!-- RipRap text in handwritten style -->
+  <!-- ShoreLore text in handwritten style -->
   <g transform="translate(96, 96)" text-anchor="middle">
     <!-- First word: "Rip" -->
     <g transform="translate(-35, -15)">

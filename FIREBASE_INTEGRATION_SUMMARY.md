@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-Successfully integrated Firebase backend database into the RipRap fishing app, replacing the previous IndexedDB-only storage with a full cloud backend while maintaining the app's core functionality and user experience.
+Successfully integrated Firebase backend database into the ShoreLore fishing app, replacing the previous IndexedDB-only storage with a full cloud backend while maintaining the app's core functionality and user experience.
 
 ## 🎯 Key Accomplishments
 
@@ -246,4 +246,4 @@ await runQuickDemo();
 
 ---
 
-**🎣 The RipRap fishing app now has a production-ready, scalable Firebase backend that maintains its privacy-first, location-based community features while adding powerful cloud capabilities!**
+**🎣 The ShoreLore fishing app now has a production-ready, scalable Firebase backend that maintains its privacy-first, location-based community features while adding powerful cloud capabilities!**

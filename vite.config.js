@@ -21,7 +21,7 @@ export default defineConfig({
     allowedHosts: [
       'localhost',
       '.netlify.app',
-      'devserver-feature-supabase-postgis-integration--riprap.netlify.app'
+      'devserver-feature-supabase-postgis-integration--shorelore.netlify.app'
     ]
   },
   base: './'

@@ -27,7 +27,7 @@ test.describe('Home Page Smoke Tests', () => {
     expect(errorBoundary).toBe(0);
     
     // Check for main app elements
-    await expect(page.locator('text=RIPRAP')).toBeVisible();
+    await expect(page.locator('text=SHORELORE')).toBeVisible();
     
     // Report any errors found
     if (consoleErrors.length > 0) {
@@ -56,7 +56,7 @@ test.describe('Home Page Smoke Tests', () => {
     const errorBoundary = await page.locator('text=Something went wrong').count();
     expect(errorBoundary).toBe(0);
     
-    await expect(page.locator('text=RIPRAP')).toBeVisible();
+    await expect(page.locator('text=SHORELORE')).toBeVisible();
   });
 
   test('should handle offline mode gracefully', async ({ page, context }) => {
@@ -90,7 +90,7 @@ test.describe('Home Page Smoke Tests', () => {
     
     // Should show username setup or main app (depending on implementation)
     const hasUsernameSetup = await page.locator('text=Choose your angler name').count();
-    const hasMainApp = await page.locator('text=RIPRAP').count();
+    const hasMainApp = await page.locator('text=SHORELORE').count();
     
     expect(hasUsernameSetup + hasMainApp).toBeGreaterThan(0);
   });

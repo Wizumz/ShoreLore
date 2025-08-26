@@ -1,6 +1,6 @@
 # Supabase + Netlify Backend Setup Guide
 
-This guide walks you through setting up the complete Supabase backend with Netlify serverless functions for the RipRap fishing app.
+This guide walks you through setting up the complete Supabase backend with Netlify serverless functions for the ShoreLore fishing app.
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ This guide walks you through setting up the complete Supabase backend with Netli
 1. **Sign up/Login** to [Supabase](https://supabase.com)
 2. **Create new project**:
    - Choose an organization
-   - Name: `riprap-fishing-app`
+   - Name: `shorelore-fishing-app`
    - Database password: Generate and save securely
    - Region: Choose closest to your users
 
@@ -341,4 +341,4 @@ CREATE INDEX idx_posts_location_gist ON posts USING GIST(location);
 - **Netlify Docs**: https://docs.netlify.com
 - **PostGIS Docs**: https://postgis.net/docs/
 
-For RipRap-specific issues, check the repository issues or create a new one.
+For ShoreLore-specific issues, check the repository issues or create a new one.

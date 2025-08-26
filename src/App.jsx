@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
         
         // Save error report for debugging
         try {
-            localStorage.setItem('riprap_last_error', JSON.stringify(errorReport));
+            localStorage.setItem('shorelore_last_error', JSON.stringify(errorReport));
         } catch (e) {
             console.warn('Failed to save error report:', e);
         }
@@ -504,7 +504,7 @@ const geocodeWithAPI = async (query) => {
 };
 
 // Utility functions for IndexedDB
-const DB_NAME = 'RipRapDB';
+const DB_NAME = 'ShoreLoreDB';
 const DB_VERSION = 1;
 
 const initDB = () => {
@@ -575,12 +575,12 @@ const getUserIdentity = async (customUsername = null, selectedColor = null) => {
         );
         
         // Store in localStorage for quick access (Firebase handles persistence)
-        localStorage.setItem('riprap_user', JSON.stringify(user));
+        localStorage.setItem('shorelore_user', JSON.stringify(user));
         return user;
     } catch (error) {
         console.error('Failed to get user identity:', error);
         // Fallback to local-only mode (existing behavior)
-        let user = localStorage.getItem('riprap_user');
+        let user = localStorage.getItem('shorelore_user');
         if (!user || customUsername) {
             const defaultColor = USERNAME_COLORS[0];
             user = {
@@ -590,7 +590,7 @@ const getUserIdentity = async (customUsername = null, selectedColor = null) => {
                 hasChangedName: !!customUsername,
                 createdAt: new Date().toISOString()
             };
-            localStorage.setItem('riprap_user', JSON.stringify(user));
+            localStorage.setItem('shorelore_user', JSON.stringify(user));
         } else {
             user = JSON.parse(user);
         }
@@ -605,11 +605,11 @@ const saveLocationSettings = (location, radius) => {
         locationRadius: radius,
         savedAt: new Date().toISOString()
     };
-    localStorage.setItem('riprap_location_settings', JSON.stringify(settings));
+    localStorage.setItem('shorelore_location_settings', JSON.stringify(settings));
 };
 
 const loadLocationSettings = () => {
-    const settings = localStorage.getItem('riprap_location_settings');
+    const settings = localStorage.getItem('shorelore_location_settings');
     if (settings) {
         return JSON.parse(settings);
     }
@@ -792,7 +792,7 @@ const FISHING_ASCII = `
               |
          ____/ \\____
         /           \\
-       |   RIPRAP   |
+       |  SHORELORE |
         \\___________/
 `;
 
@@ -823,7 +823,7 @@ const UsernameSetup = ({ onUsernameSet }) => {
                 <div className="text-center space-y-4">
                     <div className="ascii-art text-xs terminal-accent">{FISHING_ASCII}</div>
                     <div className="text-xl font-bold terminal-text">
-                        Welcome to RipRap
+                        Welcome to ShoreLore
                     </div>
                     <div className="text-sm terminal-text">
                         Choose your angler name to get started
@@ -1513,7 +1513,7 @@ const App = () => {
         const initializeUser = async () => {
             try {
                 // Try to get existing user from localStorage first (for quick startup)
-                const userData = localStorage.getItem('riprap_user');
+                const userData = localStorage.getItem('shorelore_user');
                 if (!userData) {
                     if (isMounted) setShowUsernameSetup(true);
                 } else {
@@ -1537,7 +1537,7 @@ const App = () => {
                         } catch (parseError) {
                             console.error('Failed to parse localStorage user data:', parseError);
                             // Clear corrupted data and start fresh
-                            localStorage.removeItem('riprap_user');
+                            localStorage.removeItem('shorelore_user');
                             if (isMounted) setShowUsernameSetup(true);
                         }
                     }
@@ -2069,7 +2069,7 @@ const App = () => {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <div className="text-2xl sm:text-3xl font-bold text-white tracking-wider">
-                                RIPRAP
+                                SHORELORE
                             </div>
                             <div className="hidden sm:block">
                                 <div className="text-xs">Share the Shore, Spill the Lore</div>

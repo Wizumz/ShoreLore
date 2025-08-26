@@ -1,8 +1,8 @@
-# RipRap Stability Report
+# ShoreLore Stability Report
 
 ## Executive Summary
 
-This report documents a comprehensive stability improvement initiative that addressed critical crash scenarios in the RipRap fishing community app. Through automated analysis, testing, and targeted fixes, we achieved an estimated **85-90% reduction** in fatal "Something went wrong" error boundary triggers.
+This report documents a comprehensive stability improvement initiative that addressed critical crash scenarios in the ShoreLore fishing community app. Through automated analysis, testing, and targeted fixes, we achieved an estimated **85-90% reduction** in fatal "Something went wrong" error boundary triggers.
 
 ## Critical Issues Identified & Resolved
 

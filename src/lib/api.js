@@ -1,4 +1,4 @@
-// Frontend API client for RipRap fishing app
+// Frontend API client for ShoreLore fishing app
 // Replaces IndexedDB operations with Netlify serverless function calls
 // Maintains same interface for seamless migration from local storage
 
@@ -269,7 +269,7 @@ export const offlineStorage = {
      */
     storeOffline(key, data) {
         try {
-            localStorage.setItem(`riprap_offline_${key}`, JSON.stringify({
+            localStorage.setItem(`shorelore_offline_${key}`, JSON.stringify({
                 data,
                 timestamp: Date.now()
             }));
@@ -283,14 +283,14 @@ export const offlineStorage = {
      */
     getOffline(key, maxAge = 3600000) { // 1 hour default
         try {
-            const stored = localStorage.getItem(`riprap_offline_${key}`);
+            const stored = localStorage.getItem(`shorelore_offline_${key}`);
             if (!stored) return null;
 
             const { data, timestamp } = JSON.parse(stored);
             const age = Date.now() - timestamp;
 
             if (age > maxAge) {
-                localStorage.removeItem(`riprap_offline_${key}`);
+                localStorage.removeItem(`shorelore_offline_${key}`);
                 return null;
             }
 
@@ -308,7 +308,7 @@ export const offlineStorage = {
         try {
             const keys = Object.keys(localStorage);
             keys.forEach(key => {
-                if (key.startsWith('riprap_offline_')) {
+                if (key.startsWith('shorelore_offline_')) {
                     localStorage.removeItem(key);
                 }
             });

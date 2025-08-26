@@ -1,6 +1,6 @@
-# RipRap Database Setup
+# ShoreLore Database Setup
 
-This directory contains SQL migration files and database documentation for the RipRap fishing app.
+This directory contains SQL migration files and database documentation for the ShoreLore fishing app.
 
 ## Overview
 

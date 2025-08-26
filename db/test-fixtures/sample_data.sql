@@ -1,4 +1,4 @@
--- Test fixtures for RipRap fishing app
+-- Test fixtures for ShoreLore fishing app
 -- This file contains sample data for development and testing
 
 -- Clear existing data (use with caution)

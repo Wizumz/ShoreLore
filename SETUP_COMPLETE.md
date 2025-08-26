@@ -1,12 +1,12 @@
-# 🎉 RipRap Rebranding Complete!
+# 🎉 ShoreLore Rebranding Complete!
 
 ## ✅ What's Been Completed
 
 ### 🎨 Complete Rebrand
-- **Project name** changed from "Hookr" to "RipRap"
+- **Project name** changed from "Hookr" to "ShoreLore"
 - **Tagline** updated to "Share the Shore, Spill the Lore"
 - **All references** updated throughout the codebase
-- **Handwritten-style logo** created for "RipRap"
+- **Handwritten-style logo** created for "ShoreLore"
 - **Favicon** created with stylized "R"
 
 ### 🔧 Technical Improvements
@@ -26,7 +26,7 @@
 ### ✅ GitHub Repository
 - All changes committed and pushed to main branch
 - GitHub Actions workflow will trigger automatically
-- Repository appears to have been renamed to `RipRap` (GitHub redirecting)
+- Repository appears to have been renamed to `ShoreLore` (GitHub redirecting)
 
 ### 🔄 Next Steps for You
 
@@ -66,10 +66,10 @@ npm run build
 - **Performance**: Optimized bundles with code splitting
 
 ### ✅ Live URLs (Once Deployed)
-- **GitHub Pages**: `https://[username].github.io/RipRap/`
+- **GitHub Pages**: `https://[username].github.io/ShoreLore/`
 - **Netlify**: Custom URL provided after deployment
 
-## 🎣 RipRap Features
+## 🎣 ShoreLore Features
 
 Your rebranded fishing community app includes:
 - **Anonymous posting** system
@@ -100,4 +100,4 @@ If you encounter any issues:
 2. Ensure GitHub Pages is set to use GitHub Actions
 3. For Netlify, drag & drop the `dist` folder for instant deployment
 
-**Your RipRap fishing community is ready to launch! 🚀**
+**Your ShoreLore fishing community is ready to launch! 🚀**

@@ -1,7 +1,7 @@
 {
-  "name": "riprap-fishing-app",
+  "name": "shorelore-fishing-app",
   "version": "1.0.0",
-  "description": "RipRap - Share the Shore, Spill the Lore - Anonymous fishing community PWA",
+  "description": "ShoreLore - Share the Shore, Spill the Lore - Anonymous fishing community PWA",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

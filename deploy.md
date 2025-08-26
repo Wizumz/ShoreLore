@@ -1,4 +1,4 @@
-# 🚀 RipRap Deployment to Netlify
+# 🚀 ShoreLore Deployment to Netlify
 
 ## Quick Deploy Steps
 
@@ -20,7 +20,7 @@
 1. **Push to GitHub**:
    ```bash
    git add .
-   git commit -m "RipRap rebrand complete"
+   git commit -m "ShoreLore rebrand complete"
    git push origin main
    ```
 
@@ -52,7 +52,7 @@ Once deployed, you can add a custom domain in Netlify:
 
 ## Monitoring
 
-After deployment, your RipRap fishing community will be live! Users can:
+After deployment, your ShoreLore fishing community will be live! Users can:
 - Install it as a PWA on their devices
 - Use it offline once cached
 - Share fishing spots and catches anonymously

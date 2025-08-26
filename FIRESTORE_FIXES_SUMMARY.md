@@ -2,7 +2,7 @@
 
 ## 🚨 Issues Identified
 
-The RipRap web app was experiencing critical runtime errors that caused the page to blink and disappear when loading, specifically after implementing Firestore functionality. The main symptoms were:
+The ShoreLore web app was experiencing critical runtime errors that caused the page to blink and disappear when loading, specifically after implementing Firestore functionality. The main symptoms were:
 
 1. **App crashes on load** - React component crashes due to unhandled Firebase errors
 2. **Post submission failures** - Posts failed to submit with database-related console errors  
@@ -170,4 +170,4 @@ Firebase configuration is already properly set up in `.env.local`.
 - **🔒 Security**: Fixed Firestore rule validation for proper data access
 - **📱 User Experience**: App now loads reliably without crashes or blank screens
 
-The RipRap fishing app should now load consistently and allow users to submit posts without any database-related errors or app crashes.
+The ShoreLore fishing app should now load consistently and allow users to submit posts without any database-related errors or app crashes.

@@ -17,7 +17,7 @@ test.describe('Basic Routing and Navigation', () => {
     });
 
     // Check main header is present
-    await expect(page.locator('text=RIPRAP')).toBeVisible();
+    await expect(page.locator('text=SHORELORE')).toBeVisible();
     
     // Test sorting options
     const hotButton = page.locator('button', { hasText: 'Hot' });

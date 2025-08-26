@@ -1,6 +1,6 @@
 # 🔥 Firebase Integration Setup Guide
 
-Complete guide for setting up Firebase backend integration for the RipRap fishing app.
+Complete guide for setting up Firebase backend integration for the ShoreLore fishing app.
 
 ## 📋 Table of Contents
 
@@ -22,7 +22,7 @@ Complete guide for setting up Firebase backend integration for the RipRap fishin
 
 2. **Create New Project**
    - Click "Create a project"
-   - Enter project name: `riprap-fishing-app` (or your preferred name)
+   - Enter project name: `shorelore-fishing-app` (or your preferred name)
    - Choose whether to enable Google Analytics (recommended: Yes)
    - Select or create a Google Analytics account
    - Click "Create project"
@@ -43,7 +43,7 @@ Complete guide for setting up Firebase backend integration for the RipRap fishin
    - Click on it and toggle "Enable"
    - Click "Save"
 
-   > **Why Anonymous Auth?** RipRap uses device-based anonymous users to maintain privacy while providing persistent identity across sessions.
+   > **Why Anonymous Auth?** ShoreLore uses device-based anonymous users to maintain privacy while providing persistent identity across sessions.
 
 ### Step 3: Create Firestore Database
 
@@ -67,7 +67,7 @@ Complete guide for setting up Firebase backend integration for the RipRap fishin
 
 1. **Add Web App**
    - In Project Overview, click the web icon `</>`
-   - Enter app nickname: `riprap-web`
+   - Enter app nickname: `shorelore-web`
    - Check "Also set up Firebase Hosting" (optional)
    - Click "Register app"
 
@@ -424,4 +424,4 @@ For additional help:
 
 ---
 
-**✨ Congratulations!** Your RipRap fishing app now has a fully integrated Firebase backend with real-time capabilities, offline support, and scalable architecture!
+**✨ Congratulations!** Your ShoreLore fishing app now has a fully integrated Firebase backend with real-time capabilities, offline support, and scalable architecture!

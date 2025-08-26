@@ -3,8 +3,8 @@
 ## ✅ Environment Configuration Completed
 
 ### Firebase Configuration Applied:
-- **Project ID**: riprap-c725e
-- **Auth Domain**: riprap-c725e.firebaseapp.com
+- **Project ID**: shorelore-c725e
+- **Auth Domain**: shorelore-c725e.firebaseapp.com
 - **API Key**: AIzaSyCMhCGiUmH6R7-PrKq0raLZba2Cj0truzY ✅
 - **Environment File**: `.env.local` created and configured ✅
 
@@ -92,9 +92,9 @@ Test PWA offline capabilities:
 ### Environment Variables for Production:
 ```env
 VITE_FIREBASE_API_KEY=AIzaSyCMhCGiUmH6R7-PrKq0raLZba2Cj0truzY
-VITE_FIREBASE_AUTH_DOMAIN=riprap-c725e.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=riprap-c725e
-VITE_FIREBASE_STORAGE_BUCKET=riprap-c725e.firebasestorage.app
+VITE_FIREBASE_AUTH_DOMAIN=shorelore-c725e.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=shorelore-c725e
+VITE_FIREBASE_STORAGE_BUCKET=shorelore-c725e.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=995615030562
 VITE_FIREBASE_APP_ID=1:995615030562:web:5194ca1ed7659de1cd797b
 VITE_FIREBASE_MEASUREMENT_ID=G-6MDLTVXSTF

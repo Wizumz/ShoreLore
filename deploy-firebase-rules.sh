@@ -54,7 +54,7 @@ if firebase deploy --only firestore:rules; then
     echo "3. Monitor Firebase console for any rule violations"
     echo ""
     echo "🔗 View rules in Firebase Console:"
-    echo "https://console.firebase.google.com/project/riprap-c725e/firestore/rules"
+    echo "https://console.firebase.google.com/project/shorelore-c725e/firestore/rules"
 else
     echo "❌ Failed to deploy Firebase rules"
     exit 1

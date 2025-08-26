@@ -102,7 +102,7 @@ app.post('/upsert-user', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'RipRap API is running',
+    message: 'ShoreLore API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
@@ -128,7 +128,7 @@ const port = process.env.PORT || 8080;
 const host = process.env.HOST || '0.0.0.0';
 
 app.listen(port, host, () => {
-  console.log(`🚀 RipRap API server running on ${host}:${port}`);
+  console.log(`🚀 ShoreLore API server running on ${host}:${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Health check: http://${host}:${port}/health`);
 });

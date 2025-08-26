@@ -1,7 +1,7 @@
 {
-  "name": "RipRap - Share the Shore, Spill the Lore",
-  "short_name": "RipRap",
-  "description": "RipRap - Share the Shore, Spill the Lore - Anonymous fishing community app for sharing catches, spots, and tips within your local area",
+  "name": "ShoreLore - Share the Shore, Spill the Lore",
+  "short_name": "ShoreLore",
+  "description": "ShoreLore - Share the Shore, Spill the Lore - Anonymous fishing community app for sharing catches, spots, and tips within your local area",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -67,14 +67,14 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "RipRap main feed"
+      "label": "ShoreLore main feed"
     },
     {
       "src": "./screenshots/desktop-1.png",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "RipRap desktop view"
+      "label": "ShoreLore desktop view"
     }
   ],
   "shortcuts": [
@@ -106,7 +106,7 @@
   "prefer_related_applications": false,
   "protocol_handlers": [
     {
-      "protocol": "web+riprap",
+      "protocol": "web+shorelore",
       "url": "/?share=%s"
     }
   ],

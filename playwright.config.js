@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for RipRap stability testing
+ * Playwright configuration for ShoreLore stability testing
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({

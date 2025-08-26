@@ -1,6 +1,6 @@
-const CACHE_NAME = 'riprap-v1.0.0';
-const STATIC_CACHE_NAME = 'riprap-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'riprap-dynamic-v1.0.0';
+const CACHE_NAME = 'shorelore-v1.0.0';
+const STATIC_CACHE_NAME = 'shorelore-static-v1.0.0';
+const DYNAMIC_CACHE_NAME = 'shorelore-dynamic-v1.0.0';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -150,7 +150,7 @@ async function syncOfflinePosts() {
 // Helper function to open IndexedDB
 function openDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('RipRapDB', 1);
+        const request = indexedDB.open('ShoreLoreDB', 1);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -190,7 +190,7 @@ self.addEventListener('push', (event) => {
         icon: '/public/icons/icon-192x192.png',
         badge: '/public/icons/icon-192x192.png',
         vibrate: [200, 100, 200],
-        tag: 'riprap-notification',
+        tag: 'shorelore-notification',
         actions: [
             {
                 action: 'view',
@@ -205,7 +205,7 @@ self.addEventListener('push', (event) => {
     };
     
     event.waitUntil(
-        self.registration.showNotification('RipRap', options)
+        self.registration.showNotification('ShoreLore', options)
     );
 });
 

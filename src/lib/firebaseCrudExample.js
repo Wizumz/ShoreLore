@@ -1,6 +1,6 @@
-// CRUD Operations Example for RipRap Posts using Firebase
+// CRUD Operations Example for ShoreLore Posts using Firebase
 // This file demonstrates complete Create, Read, Update, Delete operations
-// for the posts entity in the RipRap fishing app
+// for the posts entity in the ShoreLore fishing app
 
 import firebaseService from './firebaseService.js';
 
@@ -8,7 +8,7 @@ import firebaseService from './firebaseService.js';
  * Complete CRUD Example for Posts Entity
  * 
  * This demonstrates all the Firebase operations available for posts
- * in the RipRap fishing app, showcasing real-world usage patterns.
+ * in the ShoreLore fishing app, showcasing real-world usage patterns.
  */
 export class PostsCRUDExample {
     constructor() {
@@ -207,7 +207,7 @@ export class PostsCRUDExample {
      * Complete example showing typical app usage
      */
     async runCompleteDemo() {
-        console.log('🎣 Starting RipRap Firebase CRUD Demo...\n');
+        console.log('🎣 Starting ShoreLore Firebase CRUD Demo...\n');
         
         try {
             // 1. Create a new post
