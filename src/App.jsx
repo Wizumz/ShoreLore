@@ -1,5 +1,18 @@
+import { initializeApp } from 'firebase-admin';
 import React, { useState, useEffect, useRef } from 'react';
 import firebaseService, { userService } from './lib/firebaseService.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBfc-O05S-Ywg5I3cPGChLcO3fZFuSIjNE",
+  authDomain: "riprap-c725e.firebaseapp.com",
+  projectId: "riprap-c725e",
+  storageBucket: "riprap-c725e.firebasestorage.app",
+  messagingSenderId: "995615030562",
+  appId: "1:995615030562:web:5194ca1ed7659de1cd797b",
+  measurementId: "G-6MDLTVXSTF"
+};
+
+const app = initializeApp(firebaseConfig);
 
 // Error Boundary Component to catch React errors
 class ErrorBoundary extends React.Component {
